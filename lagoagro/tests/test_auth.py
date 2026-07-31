@@ -66,3 +66,12 @@ def test_reusar_refresh_token_ja_rotacionado_retorna_401():
     response = client.post("/api/auth/refresh/")
 
     assert response.status_code == 401
+
+
+def test_refresh_com_cookie_vazio_e_tratado_como_ausente():
+    client = APIClient()
+    client.cookies["refresh"] = ""
+
+    response = client.post("/api/auth/refresh/")
+
+    assert response.status_code == 401

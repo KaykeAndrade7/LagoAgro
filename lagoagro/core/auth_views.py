@@ -36,7 +36,7 @@ class RefreshView(TokenRefreshView):
 
     def post(self, request, *args, **kwargs):
         refresh_token = request.COOKIES.get("refresh")
-        if refresh_token is None:
+        if not refresh_token:
             raise AuthenticationFailed("Refresh token nao encontrado.")
 
         serializer = self.get_serializer(data={"refresh": refresh_token})
