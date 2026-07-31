@@ -4,7 +4,6 @@ from decimal import Decimal
 import pytest
 from django.contrib.auth import get_user_model
 from rest_framework import serializers, viewsets
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.test import APIRequestFactory, force_authenticate
 
 from core.permissions import UsuarioScopedQuerySetMixin
@@ -24,7 +23,6 @@ def talhao_test_viewset():
     class _TalhaoTestViewSet(UsuarioScopedQuerySetMixin, viewsets.ReadOnlyModelViewSet):
         queryset = Talhao.objects.all()
         serializer_class = _TalhaoSerializer
-        permission_classes = [IsAuthenticated]
         usuario_lookup = "propriedade__usuario"
 
     return _TalhaoTestViewSet
@@ -65,3 +63,12 @@ def test_usuario_pedindo_talhao_de_outro_usuario_recebe_404(talhao_test_viewset)
     response = view(request, pk=talhao_a1.id)
 
     assert response.status_code == 404
+
+
+def test_rota_sem_autenticacao_retorna_401(talhao_test_viewset):
+    factory = APIRequestFactory()
+    request = factory.get("/fake-url/")
+    view = talhao_test_viewset.as_view({"get": "list"})
+    response = view(request)
+
+    assert response.status_code == 401
