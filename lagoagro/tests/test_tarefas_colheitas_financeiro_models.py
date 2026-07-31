@@ -3,6 +3,7 @@ from decimal import Decimal
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.db.models.deletion import ProtectedError
 
 from crops.models import Cultura
 from finance.models import LancamentoFinanceiro
@@ -76,16 +77,22 @@ def test_lancamento_financeiro_rejeita_setor_fora_das_choices():
         lancamento.full_clean()
 
 
-def test_deletar_plantio_deleta_tarefas_colheitas_e_lancamentos_em_cascata():
+def test_deletar_plantio_deleta_tarefas_e_colheitas_em_cascata():
     plantio = _criar_plantio()
     Tarefa.objects.create(plantio=plantio, descricao="Aplicar defensivo", data="2026-02-01")
     Colheita.objects.create(plantio=plantio, data="2026-04-01", classificacao="primeira", quantidade="50.00")
-    LancamentoFinanceiro.objects.create(
-        plantio=plantio, valor="150.00", data="2026-01-15", descricao="Compra de mudas", setor="insumos"
-    )
 
     plantio.delete()
 
     assert Tarefa.objects.count() == 0
     assert Colheita.objects.count() == 0
-    assert LancamentoFinanceiro.objects.count() == 0
+
+
+def test_deletar_plantio_com_lancamento_e_protegido():
+    plantio = _criar_plantio()
+    LancamentoFinanceiro.objects.create(
+        plantio=plantio, valor="150.00", data="2026-01-15", descricao="Compra de mudas", setor="insumos"
+    )
+
+    with pytest.raises(ProtectedError):
+        plantio.delete()

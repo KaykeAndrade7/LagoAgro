@@ -76,6 +76,20 @@ def test_deletar_plantio_com_diaria_e_protegido():
         plantio.delete()
 
 
+def test_deletar_lancamento_vinculado_a_diaria_paga_e_protegido():
+    usuario, plantio = _criar_plantio_e_usuario()
+    trabalhador = Trabalhador.objects.create(usuario=usuario, nome="Joao", valor_diaria=Decimal("120.00"))
+    diaria = Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-01")
+    lancamento = LancamentoFinanceiro.objects.create(
+        plantio=plantio, valor=diaria.valor, data="2026-02-02", descricao="Pagamento", setor="mao_de_obra"
+    )
+    diaria.lancamento = lancamento
+    diaria.save()
+
+    with pytest.raises(ProtectedError):
+        lancamento.delete()
+
+
 def test_pagar_diarias_pendentes_agrupa_por_plantio_um_plantio():
     usuario, plantio = _criar_plantio_e_usuario()
     trabalhador = Trabalhador.objects.create(usuario=usuario, nome="Joao", valor_diaria=Decimal("120.00"))
