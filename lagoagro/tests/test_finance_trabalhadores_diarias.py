@@ -2,10 +2,11 @@ from decimal import Decimal
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from django.db.models.deletion import ProtectedError
 
 from crops.models import Cultura
-from finance.models import Trabalhador
+from finance.models import Diaria, Trabalhador
 from plantings.models import Plantio
 from properties.models import Propriedade, Talhao
 
@@ -30,3 +31,45 @@ def test_trabalhador_pertence_a_um_usuario_e_comeca_ativo():
     assert trabalhador.usuario == usuario
     assert trabalhador.valor_diaria == Decimal("120.00")
     assert trabalhador.ativo is True
+
+
+def test_diaria_congela_valor_do_trabalhador_no_momento_da_criacao():
+    usuario, plantio = _criar_plantio_e_usuario()
+    trabalhador = Trabalhador.objects.create(usuario=usuario, nome="Joao", valor_diaria=Decimal("120.00"))
+
+    diaria = Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-01")
+
+    assert diaria.valor == Decimal("120.00")
+
+    trabalhador.valor_diaria = Decimal("150.00")
+    trabalhador.save()
+    diaria.refresh_from_db()
+
+    assert diaria.valor == Decimal("120.00")  # nao muda com o reajuste
+
+
+def test_diaria_duplicada_no_mesmo_dia_para_o_mesmo_trabalhador_falha():
+    usuario, plantio = _criar_plantio_e_usuario()
+    trabalhador = Trabalhador.objects.create(usuario=usuario, nome="Joao", valor_diaria=Decimal("120.00"))
+    Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-01")
+
+    with pytest.raises(IntegrityError):
+        Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-01")
+
+
+def test_deletar_trabalhador_com_diaria_e_protegido():
+    usuario, plantio = _criar_plantio_e_usuario()
+    trabalhador = Trabalhador.objects.create(usuario=usuario, nome="Joao", valor_diaria=Decimal("120.00"))
+    Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-01")
+
+    with pytest.raises(ProtectedError):
+        trabalhador.delete()
+
+
+def test_deletar_plantio_com_diaria_e_protegido():
+    usuario, plantio = _criar_plantio_e_usuario()
+    trabalhador = Trabalhador.objects.create(usuario=usuario, nome="Joao", valor_diaria=Decimal("120.00"))
+    Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-01")
+
+    with pytest.raises(ProtectedError):
+        plantio.delete()
