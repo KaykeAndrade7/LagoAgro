@@ -11,7 +11,7 @@ class Cultura(models.Model):
 
 class FaseCultura(models.Model):
     cultura = models.ForeignKey(Cultura, on_delete=models.CASCADE, related_name="fases")
-    nome_fase = models.CharField(max_length=100)
+    nome = models.CharField(max_length=100)
     dia_inicio = models.PositiveIntegerField()
     dia_fim = models.PositiveIntegerField()
 
@@ -19,4 +19,4 @@ class FaseCultura(models.Model):
         ordering = ["dia_inicio"]
 
     def __str__(self):
-        return f"{self.cultura.nome} - {self.nome_fase}"
+        return f"{self.cultura.nome} - {self.nome}"

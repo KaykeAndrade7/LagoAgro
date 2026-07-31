@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
             name='FaseCultura',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nome_fase', models.CharField(max_length=100)),
+                ('nome', models.CharField(max_length=100)),
                 ('dia_inicio', models.PositiveIntegerField()),
                 ('dia_fim', models.PositiveIntegerField()),
                 ('cultura', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='fases', to='crops.cultura')),
