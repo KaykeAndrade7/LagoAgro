@@ -6,7 +6,8 @@ from django.db import IntegrityError
 from django.db.models.deletion import ProtectedError
 
 from crops.models import Cultura
-from finance.models import Diaria, Trabalhador
+from finance.models import Diaria, LancamentoFinanceiro, Trabalhador
+from finance.services import pagar_diarias_pendentes
 from plantings.models import Plantio
 from properties.models import Propriedade, Talhao
 
@@ -73,3 +74,48 @@ def test_deletar_plantio_com_diaria_e_protegido():
 
     with pytest.raises(ProtectedError):
         plantio.delete()
+
+
+def test_pagar_diarias_pendentes_agrupa_por_plantio_um_plantio():
+    usuario, plantio = _criar_plantio_e_usuario()
+    trabalhador = Trabalhador.objects.create(usuario=usuario, nome="Joao", valor_diaria=Decimal("120.00"))
+    Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-01")
+    Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-02")
+    Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-03")
+
+    lancamentos = pagar_diarias_pendentes(trabalhador)
+
+    assert len(lancamentos) == 1
+    assert lancamentos[0].valor == Decimal("360.00")
+    assert lancamentos[0].setor == "mao_de_obra"
+    assert lancamentos[0].plantio == plantio
+    assert Diaria.objects.filter(trabalhador=trabalhador, lancamento__isnull=True).count() == 0
+
+
+def test_pagar_diarias_pendentes_agrupa_por_plantio_dois_plantios():
+    usuario, plantio1 = _criar_plantio_e_usuario()
+    talhao2 = Talhao.objects.create(
+        propriedade=plantio1.talhao.propriedade, nome="Talhao 2", area=Decimal("1.00"), tipo_solo="arenoso"
+    )
+    cultura2 = Cultura.objects.create(nome="Tomate", ciclo_dias=80)
+    plantio2 = Plantio.objects.create(talhao=talhao2, cultura=cultura2, data_plantio="2026-01-05")
+    trabalhador = Trabalhador.objects.create(usuario=usuario, nome="Joao", valor_diaria=Decimal("100.00"))
+    Diaria.objects.create(trabalhador=trabalhador, plantio=plantio1, data="2026-02-01")
+    Diaria.objects.create(trabalhador=trabalhador, plantio=plantio2, data="2026-02-02")
+
+    lancamentos = pagar_diarias_pendentes(trabalhador)
+
+    assert len(lancamentos) == 2
+    valores_por_plantio = {l.plantio_id: l.valor for l in lancamentos}
+    assert valores_por_plantio[plantio1.id] == Decimal("100.00")
+    assert valores_por_plantio[plantio2.id] == Decimal("100.00")
+
+
+def test_pagar_diarias_pendentes_sem_pendencias_retorna_lista_vazia():
+    usuario, _ = _criar_plantio_e_usuario()
+    trabalhador = Trabalhador.objects.create(usuario=usuario, nome="Joao", valor_diaria=Decimal("120.00"))
+
+    lancamentos = pagar_diarias_pendentes(trabalhador)
+
+    assert lancamentos == []
+    assert LancamentoFinanceiro.objects.count() == 0
