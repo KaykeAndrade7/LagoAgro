@@ -52,13 +52,26 @@ def test_deletar_insumo_em_uso_e_protegido():
         insumo.delete()
 
 
-def test_deletar_plantio_deleta_aplicacoes_em_cascata():
+def test_deletar_plantio_com_aplicacoes_e_protegido():
     usuario, plantio = _criar_plantio_e_usuario()
     insumo = Insumo.objects.create(usuario=usuario, nome="ProdutoX", tipo="veneno", carencia_dias=7)
     AplicacaoInsumo.objects.create(
         plantio=plantio, insumo=insumo, data="2026-02-01", quantidade="1.50", created_by=usuario
     )
 
-    plantio.delete()
+    with pytest.raises(ProtectedError):
+        plantio.delete()
 
-    assert AplicacaoInsumo.objects.count() == 0
+
+def test_deletar_autor_da_aplicacao_define_created_by_como_none():
+    usuario, plantio = _criar_plantio_e_usuario()
+    insumo = Insumo.objects.create(usuario=usuario, nome="ProdutoX", tipo="veneno", carencia_dias=7)
+    funcionario = get_user_model().objects.create_user(username="funcionario1", password="senha123")
+    aplicacao = AplicacaoInsumo.objects.create(
+        plantio=plantio, insumo=insumo, data="2026-02-01", quantidade="1.50", created_by=funcionario
+    )
+
+    funcionario.delete()
+
+    aplicacao.refresh_from_db()
+    assert aplicacao.created_by is None

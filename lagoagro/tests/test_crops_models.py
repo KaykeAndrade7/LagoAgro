@@ -18,7 +18,7 @@ def test_cultura_e_catalogo_compartilhado_sem_usuario():
 def test_fase_cultura_pertence_a_uma_cultura_com_intervalo_de_dias():
     cultura = Cultura.objects.create(nome="Pimentao", ciclo_dias=90)
 
-    fase = FaseCultura.objects.create(cultura=cultura, nome_fase="muda", dia_inicio=0, dia_fim=20)
+    fase = FaseCultura.objects.create(cultura=cultura, nome="muda", dia_inicio=0, dia_fim=20)
 
     assert fase.cultura == cultura
     assert fase.dia_inicio == 0
@@ -27,9 +27,9 @@ def test_fase_cultura_pertence_a_uma_cultura_com_intervalo_de_dias():
 
 def test_fases_sao_ordenadas_por_dia_inicio():
     cultura = Cultura.objects.create(nome="Pimentao", ciclo_dias=90)
-    FaseCultura.objects.create(cultura=cultura, nome_fase="floracao", dia_inicio=21, dia_fim=45)
-    FaseCultura.objects.create(cultura=cultura, nome_fase="muda", dia_inicio=0, dia_fim=20)
+    FaseCultura.objects.create(cultura=cultura, nome="floracao", dia_inicio=21, dia_fim=45)
+    FaseCultura.objects.create(cultura=cultura, nome="muda", dia_inicio=0, dia_fim=20)
 
-    nomes = list(cultura.fases.values_list("nome_fase", flat=True))
+    nomes = list(cultura.fases.values_list("nome", flat=True))
 
     assert nomes == ["muda", "floracao"]
