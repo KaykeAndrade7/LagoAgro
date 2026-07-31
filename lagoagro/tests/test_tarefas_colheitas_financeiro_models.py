@@ -2,6 +2,7 @@ from decimal import Decimal
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 
 from crops.models import Cultura
 from finance.models import LancamentoFinanceiro
@@ -48,18 +49,40 @@ def test_lancamento_financeiro_pertence_a_um_plantio():
     plantio = _criar_plantio()
 
     lancamento = LancamentoFinanceiro.objects.create(
-        plantio=plantio, valor=Decimal("150.00"), data="2026-01-15", descricao="Compra de mudas"
+        plantio=plantio, valor=Decimal("150.00"), data="2026-01-15", descricao="Compra de mudas", setor="insumos"
     )
 
     assert lancamento.plantio == plantio
     assert lancamento.valor == Decimal("150.00")
 
 
+def test_lancamento_financeiro_aceita_setor_mao_de_obra():
+    plantio = _criar_plantio()
+
+    lancamento = LancamentoFinanceiro.objects.create(
+        plantio=plantio, valor=Decimal("300.00"), data="2026-01-20", descricao="Diaria de colheita", setor="mao_de_obra"
+    )
+
+    assert lancamento.setor == "mao_de_obra"
+
+
+def test_lancamento_financeiro_rejeita_setor_fora_das_choices():
+    plantio = _criar_plantio()
+    lancamento = LancamentoFinanceiro(
+        plantio=plantio, valor=Decimal("50.00"), data="2026-01-20", descricao="Gasto qualquer", setor="setor_inventado"
+    )
+
+    with pytest.raises(ValidationError):
+        lancamento.full_clean()
+
+
 def test_deletar_plantio_deleta_tarefas_colheitas_e_lancamentos_em_cascata():
     plantio = _criar_plantio()
     Tarefa.objects.create(plantio=plantio, descricao="Aplicar defensivo", data="2026-02-01")
     Colheita.objects.create(plantio=plantio, data="2026-04-01", classificacao="primeira", quantidade="50.00")
-    LancamentoFinanceiro.objects.create(plantio=plantio, valor="150.00", data="2026-01-15", descricao="Compra de mudas")
+    LancamentoFinanceiro.objects.create(
+        plantio=plantio, valor="150.00", data="2026-01-15", descricao="Compra de mudas", setor="insumos"
+    )
 
     plantio.delete()
 
