@@ -9,6 +9,24 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 
+REFRESH_COOKIE_NAME = "refresh"
+
+
+def _set_refresh_cookie(response, token):
+    response.set_cookie(
+        REFRESH_COOKIE_NAME,
+        str(token),
+        max_age=int(settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds()),
+        httponly=True,
+        secure=settings.REFRESH_COOKIE_SECURE,
+        samesite=settings.REFRESH_COOKIE_SAMESITE,
+    )
+
+
+def _delete_refresh_cookie(response):
+    response.delete_cookie(REFRESH_COOKIE_NAME, samesite=settings.REFRESH_COOKIE_SAMESITE)
+
+
 class LoginView(TokenObtainPairView):
     permission_classes = [AllowAny]
 
@@ -24,13 +42,7 @@ class LoginView(TokenObtainPairView):
             "access": access,
             "user": {"id": usuario.id, "username": usuario.username},
         })
-        response.set_cookie(
-            "refresh",
-            str(refresh),
-            httponly=True,
-            secure=settings.REFRESH_COOKIE_SECURE,
-            samesite=settings.REFRESH_COOKIE_SAMESITE,
-        )
+        _set_refresh_cookie(response, refresh)
         return response
 
 
@@ -38,7 +50,7 @@ class RefreshView(TokenRefreshView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        refresh_token = request.COOKIES.get("refresh")
+        refresh_token = request.COOKIES.get(REFRESH_COOKIE_NAME)
         if not refresh_token:
             raise AuthenticationFailed("Refresh token nao encontrado.")
 
@@ -53,13 +65,7 @@ class RefreshView(TokenRefreshView):
         access = data["access"]
 
         response = Response({"access": access})
-        response.set_cookie(
-            "refresh",
-            str(novo_refresh),
-            httponly=True,
-            secure=settings.REFRESH_COOKIE_SECURE,
-            samesite=settings.REFRESH_COOKIE_SAMESITE,
-        )
+        _set_refresh_cookie(response, novo_refresh)
         return response
 
 
@@ -67,7 +73,7 @@ class LogoutView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        refresh_token = request.COOKIES.get("refresh")
+        refresh_token = request.COOKIES.get(REFRESH_COOKIE_NAME)
         if refresh_token:
             try:
                 RefreshToken(refresh_token).blacklist()
@@ -75,5 +81,5 @@ class LogoutView(APIView):
                 pass  # token ja invalido/expirado - nada a fazer, logout eh idempotente
 
         response = Response(status=status.HTTP_200_OK)
-        response.delete_cookie("refresh")
+        _delete_refresh_cookie(response)
         return response
