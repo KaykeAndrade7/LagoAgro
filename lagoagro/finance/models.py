@@ -12,6 +12,33 @@ class Trabalhador(models.Model):
         return self.nome
 
 
+class Diaria(models.Model):
+    trabalhador = models.ForeignKey(Trabalhador, on_delete=models.PROTECT, related_name="diarias")
+    plantio = models.ForeignKey("plantings.Plantio", on_delete=models.PROTECT, related_name="diarias")
+    data = models.DateField()
+    valor = models.DecimalField(max_digits=10, decimal_places=2)
+    lancamento = models.ForeignKey(
+        "finance.LancamentoFinanceiro",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="diarias_pagas",
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["trabalhador", "data"], name="unique_diaria_por_trabalhador_e_dia")
+        ]
+
+    def save(self, *args, **kwargs):
+        if self._state.adding and self.valor is None:
+            self.valor = self.trabalhador.valor_diaria
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.trabalhador.nome} - {self.data}"
+
+
 class LancamentoFinanceiro(models.Model):
     # Lista generica de setores de gasto (aprovada com o usuario) - cobre mao de
     # obra separadamente dos demais custos, sem precisar de um catalogo a parte.
