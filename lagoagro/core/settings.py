@@ -14,6 +14,8 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -119,6 +121,9 @@ SIMPLE_JWT = {
 # producao (variavel de ambiente, mesmo padrao de SECRET_KEY/DEBUG acima).
 REFRESH_COOKIE_SECURE = os.environ.get('REFRESH_COOKIE_SECURE', 'False') == 'True'
 REFRESH_COOKIE_SAMESITE = os.environ.get('REFRESH_COOKIE_SAMESITE', 'Lax')
+
+if REFRESH_COOKIE_SAMESITE.lower() == 'none' and not REFRESH_COOKIE_SECURE:
+    raise ImproperlyConfigured('SameSite=None exige Secure=True (ver ADR 003).')
 
 
 # Password validation
