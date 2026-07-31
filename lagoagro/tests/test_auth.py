@@ -1,6 +1,13 @@
+from datetime import timedelta
+
 import pytest
 from django.contrib.auth import get_user_model
+from django.test import RequestFactory
+from django.utils import timezone
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken
+from rest_framework_simplejwt.tokens import AccessToken
 
 pytestmark = pytest.mark.django_db
 
@@ -104,3 +111,14 @@ def test_logout_sem_cookie_refresh_ainda_retorna_200():
     response = client.post("/api/auth/logout/")
 
     assert response.status_code == 200
+
+
+def test_access_token_expirado_e_rejeitado():
+    usuario = _criar_usuario()
+    token = AccessToken.for_user(usuario)
+    token.set_exp(from_time=timezone.now() - timedelta(minutes=1), lifetime=timedelta(minutes=0))
+
+    request = RequestFactory().get("/", HTTP_AUTHORIZATION=f"Bearer {token}")
+
+    with pytest.raises(InvalidToken):
+        JWTAuthentication().authenticate(request)
