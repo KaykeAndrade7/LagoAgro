@@ -33,7 +33,7 @@ Fornecer uma ferramenta simples que:
 | RF05 | Cadastrar produtos (defensivos/adubos) uma única vez em catálogo reutilizável |
 | RF06 | Registrar aplicação de insumo: produto do catálogo + quantidade usada + data (registro manual, sem cálculo automático de dosagem) |
 | RF07 | Calcular data segura de colheita (última aplicação + carência do produto) |
-| RF08 | Registrar lançamentos financeiros (gasto) por plantio |
+| RF08 | Registrar lançamentos financeiros (gasto) por plantio, classificado por setor (mão de obra, insumos, maquinário/equipamentos, transporte/frete, manutenção/infraestrutura, outros) |
 | RF09 | Registrar resultado da colheita por classificação (ex.: caixas de primeira, caixas de segunda) |
 | RF10 | Criar tarefas manuais vinculadas a um plantio, com data definida pelo usuário |
 | RF11 | Notificar o usuário no dia da tarefa (prioridade: aplicação de defensivo) |
@@ -92,3 +92,12 @@ Fornecer uma ferramenta simples que:
 - Confirmado: controle financeiro e gestão de tarefas são **ambos** prioritários
   (não um em detrimento do outro).
 - Confirmado: abordagem incremental — lançar versão simples e evoluir.
+
+### Nova ideia do usuário — 2026-07-31
+
+- **Adicionado**: lançamentos financeiros (RF08) passam a ser classificados por
+  setor de gasto, com destaque para mão de obra (pagamento de trabalhadores)
+  como categoria própria, além de insumos, maquinário/equipamentos,
+  transporte/frete, manutenção/infraestrutura e outros. Lista genérica,
+  pensada para cobrir os gastos de uma pequena propriedade sem precisar de um
+  catálogo configurável à parte.
