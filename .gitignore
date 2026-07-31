@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Django
+*.sqlite3
+staticfiles/
+media/
+
+# Node / frontend (futuro)
+node_modules/
+dist/
+.vite/
+
+# Env / segredos
+.env
+.env.local
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
