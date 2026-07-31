@@ -82,12 +82,13 @@ def test_logout_invalida_refresh_token_impedindo_reuso():
     client = APIClient()
     login_response = client.post("/api/auth/login/", {"username": "produtor1", "password": "senha123"})
     access = login_response.data["access"]
+    token_antes_do_logout = login_response.cookies["refresh"].value
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
 
     logout_response = client.post("/api/auth/logout/")
-
     assert logout_response.status_code == 200
 
+    client.cookies["refresh"] = token_antes_do_logout  # forca o token que o logout deveria ter invalidado
     refresh_response = client.post("/api/auth/refresh/")
     assert refresh_response.status_code == 401
 
