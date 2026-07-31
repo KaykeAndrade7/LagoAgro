@@ -15,13 +15,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 
 from core.auth_views import LoginView, LogoutView, RefreshView
+from properties.views import PropriedadeViewSet, TalhaoViewSet
+
+router = DefaultRouter()
+router.register("propriedades", PropriedadeViewSet)
+router.register("talhoes", TalhaoViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/login/', LoginView.as_view(), name='auth-login'),
     path('api/auth/refresh/', RefreshView.as_view(), name='auth-refresh'),
     path('api/auth/logout/', LogoutView.as_view(), name='auth-logout'),
+    path('api/', include(router.urls)),
 ]
