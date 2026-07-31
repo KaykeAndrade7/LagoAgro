@@ -104,11 +104,3 @@ def test_logout_sem_cookie_refresh_ainda_retorna_200():
     response = client.post("/api/auth/logout/")
 
     assert response.status_code == 200
-
-
-def test_rota_protegida_sem_token_retorna_401():
-    client = APIClient()
-
-    response = client.post("/api/auth/logout/")
-
-    assert response.status_code == 401
