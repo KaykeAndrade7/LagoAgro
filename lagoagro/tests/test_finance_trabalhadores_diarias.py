@@ -119,3 +119,26 @@ def test_pagar_diarias_pendentes_sem_pendencias_retorna_lista_vazia():
 
     assert lancamentos == []
     assert LancamentoFinanceiro.objects.count() == 0
+
+
+def test_pagar_diarias_pendentes_ignora_diarias_ja_pagas():
+    usuario, plantio = _criar_plantio_e_usuario()
+    trabalhador = Trabalhador.objects.create(usuario=usuario, nome="Joao", valor_diaria=Decimal("100.00"))
+
+    # diaria ja paga (simula um pagamento anterior)
+    diaria_paga = Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-01-20")
+    lancamento_anterior = LancamentoFinanceiro.objects.create(
+        plantio=plantio, valor=diaria_paga.valor, data="2026-01-21", descricao="Pagamento anterior", setor="mao_de_obra"
+    )
+    diaria_paga.lancamento = lancamento_anterior
+    diaria_paga.save()
+
+    # diaria ainda pendente
+    Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-01")
+
+    lancamentos = pagar_diarias_pendentes(trabalhador)
+
+    assert len(lancamentos) == 1
+    assert lancamentos[0].valor == Decimal("100.00")  # so a pendente, nao soma a ja paga
+    # chamar de novo agora nao deve gerar nada (idempotencia)
+    assert pagar_diarias_pendentes(trabalhador) == []
