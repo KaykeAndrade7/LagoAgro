@@ -41,7 +41,7 @@ que demonstra processo de arquitetura documentado (ver `docs/`).
 
 ```
 lagoagro/
-├── core/                  # config Django
+├── core/                  # config Django (auth JWT em auth_views.py, isolamento multi-tenant em permissions.py)
 ├── properties/            # Propriedade, Talhao
 ├── crops/                 # Cultura, FaseCultura
 ├── plantings/             # Plantio
@@ -105,8 +105,9 @@ Exemplos:
 Regra: cada commit deve ser atômico (uma mudança coerente por commit) — não
 misturar `feat` com `fix` não relacionado no mesmo commit.
 
-## Próximo passo no momento em que este arquivo foi criado
+## Status atual
 
-Ainda não há código. Próxima tarefa: modelar os models Django definitivos a
-partir das entidades acima e escrever os primeiros testes de
-`domain/cycle_calc.py`.
+Models de todas as entidades, autenticação JWT multi-tenant (`core/auth_views.py`,
+`core/permissions.py`) e as regras de negócio de finance já estão implementados
+e cobertos por testes. Consultar `docs/adr/` para o histórico de decisões e
+`docs/requirements.md` para o que ainda falta por RF.
