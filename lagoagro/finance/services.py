@@ -1,12 +1,24 @@
+# Fica aqui (e nao em domain/) porque le e escreve no banco - nao e calculo
+# puro, entao nao se encaixa na regra de domain/ ser testavel sem banco/Django.
+from django.db import transaction
 from django.db.models import Max, Min, Sum
 from django.utils import timezone
 
 from .models import Diaria, LancamentoFinanceiro
 
 
+# Tudo-ou-nada: uma falha no meio do loop nao pode deixar um lancamento orfao
+# com as diarias daquele plantio ainda marcadas como pendentes (double-booking
+# na proxima chamada).
+@transaction.atomic
 def pagar_diarias_pendentes(trabalhador):
     diarias_pendentes = Diaria.objects.filter(trabalhador=trabalhador, lancamento__isnull=True)
-    plantio_ids_pendentes = diarias_pendentes.values_list("plantio_id", flat=True).distinct()
+    # order_by() limpa o ordering padrao (Meta.ordering = ["-data"]) so para esta
+    # consulta: com distinct() ativo, Django inclui os campos de order_by no SELECT,
+    # o que faria o distinct considerar (plantio_id, data) em vez de so plantio_id.
+    plantio_ids_pendentes = list(
+        diarias_pendentes.order_by().values_list("plantio_id", flat=True).distinct()
+    )
 
     lancamentos_criados = []
     for plantio_id in plantio_ids_pendentes:

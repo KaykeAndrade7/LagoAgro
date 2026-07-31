@@ -12,11 +12,14 @@ class Trabalhador(models.Model):
         return self.nome
 
 
+# trabalhador e plantio sao PROTECT pelo mesmo motivo de AplicacaoInsumo em
+# inputs/models.py (ADR 007): a diaria e trilha de pagamento e nao pode sumir
+# junto com o registro que ela referencia.
 class Diaria(models.Model):
     trabalhador = models.ForeignKey(Trabalhador, on_delete=models.PROTECT, related_name="diarias")
     plantio = models.ForeignKey("plantings.Plantio", on_delete=models.PROTECT, related_name="diarias")
     data = models.DateField()
-    valor = models.DecimalField(max_digits=10, decimal_places=2)
+    valor = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
     lancamento = models.ForeignKey(
         "finance.LancamentoFinanceiro",
         on_delete=models.PROTECT,
@@ -29,6 +32,7 @@ class Diaria(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["trabalhador", "data"], name="unique_diaria_por_trabalhador_e_dia")
         ]
+        ordering = ["-data"]
 
     def save(self, *args, **kwargs):
         if self._state.adding and self.valor is None:
@@ -51,7 +55,9 @@ class LancamentoFinanceiro(models.Model):
         ("outros", "Outros"),
     ]
 
-    plantio = models.ForeignKey("plantings.Plantio", on_delete=models.CASCADE, related_name="lancamentos")
+    # plantio e PROTECT (ADR 008): lancamento e trilha financeira e nao pode
+    # sumir junto com o plantio (usar Plantio.status="cancelado" em vez de deletar).
+    plantio = models.ForeignKey("plantings.Plantio", on_delete=models.PROTECT, related_name="lancamentos")
     valor = models.DecimalField(max_digits=10, decimal_places=2)
     data = models.DateField()
     descricao = models.CharField(max_length=255)
