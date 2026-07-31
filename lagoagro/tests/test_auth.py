@@ -30,3 +30,39 @@ def test_login_com_senha_errada_retorna_401():
     response = client.post("/api/auth/login/", {"username": "produtor1", "password": "senha_errada"})
 
     assert response.status_code == 401
+
+
+def test_refresh_com_cookie_valido_retorna_novo_access_e_rotaciona_cookie():
+    _criar_usuario()
+    client = APIClient()
+    login_response = client.post("/api/auth/login/", {"username": "produtor1", "password": "senha123"})
+    cookie_antigo = login_response.cookies["refresh"].value
+
+    refresh_response = client.post("/api/auth/refresh/")
+
+    assert refresh_response.status_code == 200
+    assert "access" in refresh_response.data
+    assert "refresh" not in refresh_response.data
+    assert refresh_response.cookies["refresh"].value != cookie_antigo
+
+
+def test_refresh_sem_cookie_retorna_401():
+    client = APIClient()
+
+    response = client.post("/api/auth/refresh/")
+
+    assert response.status_code == 401
+
+
+def test_reusar_refresh_token_ja_rotacionado_retorna_401():
+    _criar_usuario()
+    client = APIClient()
+    login_response = client.post("/api/auth/login/", {"username": "produtor1", "password": "senha123"})
+    token_antigo = login_response.cookies["refresh"].value
+
+    client.post("/api/auth/refresh/")  # rotaciona - client.cookies fica com o token novo
+
+    client.cookies["refresh"] = token_antigo  # forca reenvio do token antigo (ja rotacionado)
+    response = client.post("/api/auth/refresh/")
+
+    assert response.status_code == 401
