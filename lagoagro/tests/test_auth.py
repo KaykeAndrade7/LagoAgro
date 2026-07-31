@@ -75,3 +75,39 @@ def test_refresh_com_cookie_vazio_e_tratado_como_ausente():
     response = client.post("/api/auth/refresh/")
 
     assert response.status_code == 401
+
+
+def test_logout_invalida_refresh_token_impedindo_reuso():
+    _criar_usuario()
+    client = APIClient()
+    login_response = client.post("/api/auth/login/", {"username": "produtor1", "password": "senha123"})
+    access = login_response.data["access"]
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+
+    logout_response = client.post("/api/auth/logout/")
+
+    assert logout_response.status_code == 200
+
+    refresh_response = client.post("/api/auth/refresh/")
+    assert refresh_response.status_code == 401
+
+
+def test_logout_sem_cookie_refresh_ainda_retorna_200():
+    _criar_usuario()
+    client = APIClient()
+    login_response = client.post("/api/auth/login/", {"username": "produtor1", "password": "senha123"})
+    access = login_response.data["access"]
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+    client.cookies.pop("refresh", None)
+
+    response = client.post("/api/auth/logout/")
+
+    assert response.status_code == 200
+
+
+def test_rota_protegida_sem_token_retorna_401():
+    client = APIClient()
+
+    response = client.post("/api/auth/logout/")
+
+    assert response.status_code == 401
