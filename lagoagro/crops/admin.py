@@ -1,3 +1,6 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Cultura, FaseCultura
+
+admin.site.register(Cultura)
+admin.site.register(FaseCultura)
