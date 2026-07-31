@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 from django.contrib.auth import get_user_model
 
@@ -22,18 +24,18 @@ def test_talhao_pertence_a_uma_propriedade():
     propriedade = Propriedade.objects.create(usuario=usuario, nome="Sitio Boa Vista")
 
     talhao = Talhao.objects.create(
-        propriedade=propriedade, nome="Talhao 1", area="2.50", tipo_solo="argiloso"
+        propriedade=propriedade, nome="Talhao 1", area=Decimal("2.50"), tipo_solo="argiloso"
     )
 
     assert talhao.propriedade == propriedade
-    assert talhao.area == 2.5
+    assert talhao.area == Decimal("2.50")
 
 
 def test_deletar_propriedade_deleta_talhoes_em_cascata():
     User = get_user_model()
     usuario = User.objects.create_user(username="produtor1", password="senha123")
     propriedade = Propriedade.objects.create(usuario=usuario, nome="Sitio Boa Vista")
-    Talhao.objects.create(propriedade=propriedade, nome="Talhao 1", area="2.50", tipo_solo="argiloso")
+    Talhao.objects.create(propriedade=propriedade, nome="Talhao 1", area=Decimal("2.50"), tipo_solo="argiloso")
 
     propriedade.delete()
 
