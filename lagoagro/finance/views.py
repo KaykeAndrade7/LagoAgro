@@ -27,7 +27,7 @@ class TrabalhadorViewSet(UsuarioScopedQuerySetMixin, viewsets.ModelViewSet):
     def pagar_diarias(self, request, pk=None):
         trabalhador = self.get_object()
         lancamentos = pagar_diarias_pendentes(trabalhador)
-        serializer = LancamentoFinanceiroSerializer(lancamentos, many=True)
+        serializer = LancamentoFinanceiroSerializer(lancamentos, many=True, context={"request": request})
         return Response(serializer.data)
 
 
