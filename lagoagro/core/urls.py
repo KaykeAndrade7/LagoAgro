@@ -23,6 +23,7 @@ from crops.views import CulturaViewSet
 from inputs.views import AplicacaoInsumoViewSet, InsumoViewSet
 from plantings.views import PlantioViewSet
 from properties.views import PropriedadeViewSet, TalhaoViewSet
+from tasks.views import TarefaViewSet
 
 router = DefaultRouter()
 router.register("propriedades", PropriedadeViewSet)
@@ -31,6 +32,7 @@ router.register("culturas", CulturaViewSet)
 router.register("plantios", PlantioViewSet)
 router.register("insumos", InsumoViewSet)
 router.register("aplicacoes-insumo", AplicacaoInsumoViewSet)
+router.register("tarefas", TarefaViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
