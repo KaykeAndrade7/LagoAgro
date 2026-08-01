@@ -9,5 +9,8 @@ class PushSubscription(models.Model):
     auth = models.CharField(max_length=255)
     criado_em = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["criado_em"]
+
     def __str__(self):
         return f"{self.usuario} - {self.endpoint[:40]}"

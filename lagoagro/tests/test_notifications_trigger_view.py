@@ -42,3 +42,12 @@ def test_secret_nao_configurado_falha_fechado():
     response = client.post("/api/notificacoes/disparar/", HTTP_X_NOTIFICATION_SECRET="qualquer-coisa")
 
     assert response.status_code == 403
+
+
+@override_settings(NOTIFICATION_TRIGGER_SECRET="segredo-teste")
+def test_secret_com_caracteres_nao_ascii_retorna_403_sem_erro():
+    client = APIClient()
+
+    response = client.post("/api/notificacoes/disparar/", HTTP_X_NOTIFICATION_SECRET="caféÿ")
+
+    assert response.status_code == 403

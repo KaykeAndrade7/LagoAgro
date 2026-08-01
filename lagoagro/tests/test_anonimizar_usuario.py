@@ -6,6 +6,7 @@ from django.core.management import call_command
 
 from crops.models import Cultura
 from inputs.models import AplicacaoInsumo, Insumo
+from notifications.models import PushSubscription
 from plantings.models import Plantio
 from properties.models import Propriedade, Talhao
 
@@ -48,3 +49,15 @@ def test_anonimizar_usuario_preserva_historico_operacional():
     assert aplicacao.plantio_id == plantio.pk
     assert Talhao.objects.filter(pk=talhao.pk).exists()
     assert Insumo.objects.filter(pk=insumo.pk).exists()
+
+
+def test_anonimizar_usuario_remove_push_subscriptions():
+    User = get_user_model()
+    usuario = User.objects.create_user(username="produtor1", password="senha123")
+    subscription = PushSubscription.objects.create(
+        usuario=usuario, endpoint="https://push.example/1", p256dh="a", auth="b"
+    )
+
+    call_command("anonimizar_usuario", usuario.pk)
+
+    assert not PushSubscription.objects.filter(pk=subscription.pk).exists()

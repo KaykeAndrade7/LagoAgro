@@ -26,4 +26,6 @@ class Command(BaseCommand):
         usuario.set_unusable_password()
         usuario.save()
 
+        usuario.push_subscriptions.all().delete()
+
         self.stdout.write(self.style.SUCCESS(f"Usuario {options['user_id']} anonimizado."))
