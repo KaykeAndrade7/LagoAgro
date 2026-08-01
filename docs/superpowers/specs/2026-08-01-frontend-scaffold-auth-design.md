@@ -67,11 +67,28 @@ manipulá-lo diretamente — o browser o envia sozinho em toda requisição
 para o backend (mesma origem via proxy do Vite em dev; mesma decisão em
 produção quando o Task #9 configurar isso).
 
+**Correção em relação ao contrato real do backend:** `POST
+/api/auth/refresh/` retorna só `{access}` — sem dados do usuário
+(`core/auth_views.py::RefreshView`, confirmado ao virar isto em plano). Só
+`POST /api/auth/login/` retorna `{access, user}`. Sem isso, um reload de
+página (fluxo de bootstrap via refresh) teria um `access` válido mas
+nenhum `username` pra mostrar. Este documento por isso inclui um endpoint
+novo, pequeno: **`GET /api/auth/me/`** (`core/auth_views.py`, protegido
+pelo `IsAuthenticated`/`JWTAuthentication` que já são o default global do
+projeto — sem `permission_classes` especial, ao contrário de
+Login/Refresh/Logout que são `AllowAny`) retornando
+`{"id": ..., "username": ...}` do usuário autenticado. Decisão: resolver
+isso no backend (endpoint novo, ~10 linhas, mesmo padrão de todo o resto da
+API) em vez de cachear o usuário no `localStorage` no frontend — evita
+dado potencialmente desatualizado e mantém a regra "nada sensível nem
+não-sensível de sessão persiste no browser" simples de enunciar.
+
 **Bootstrap ao carregar o app:** antes de renderizar qualquer rota
-protegida, `AuthContext` tenta uma vez `POST /api/auth/refresh/`. Se
-suceder, o `access` retornado populate o contexto e o usuário está
-"logado" sem precisar digitar senha de novo (sessão sobrevive a F5). Se
-falhar (cookie ausente/expirado), o app mostra a tela de login normalmente.
+protegida, `AuthContext` tenta uma vez `POST /api/auth/refresh/`; se
+suceder, encadeia `GET /api/auth/me/` com o novo `access` pra obter
+`{id, username}` e popular o contexto — sessão sobrevive a F5 sem precisar
+digitar senha de novo. Se o refresh falhar (cookie ausente/expirado), o
+app mostra a tela de login normalmente.
 
 **Refresh-on-401:** o `api-client.ts` intercepta qualquer resposta 401 de
 uma chamada autenticada, tenta `POST /api/auth/refresh/` **uma vez**, e se
