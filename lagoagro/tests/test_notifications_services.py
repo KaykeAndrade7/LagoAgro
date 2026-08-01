@@ -100,13 +100,86 @@ def test_erro_temporario_mantem_subscription():
     usuario, plantio = _criar_plantio_e_usuario()
     subscription = PushSubscription.objects.create(usuario=usuario, endpoint="https://push.example/1", p256dh="a", auth="b")
     hoje = timezone.localdate()
-    Tarefa.objects.create(plantio=plantio, descricao="Aplicar defensivo", data=hoje)
+    tarefa = Tarefa.objects.create(plantio=plantio, descricao="Aplicar defensivo", data=hoje)
 
     with patch("notifications.services.webpush", side_effect=WebPushException("erro temporario", response=_FakeResponse(500))):
         resultado = enviar_notificacoes_do_dia(hoje=hoje)
 
     assert resultado == {"tarefas_notificadas": 0, "subscriptions_removidas": 0}
     assert PushSubscription.objects.filter(id=subscription.id).exists()
+    tarefa.refresh_from_db()
+    assert tarefa.notificado_em is None, (
+        "tarefa nao deve ser marcada como notificada quando todos os envios falham "
+        "de forma transitoria, para permitir retry no mesmo dia"
+    )
+
+
+def test_erro_temporario_permite_retry_no_mesmo_dia():
+    usuario, plantio = _criar_plantio_e_usuario()
+    PushSubscription.objects.create(usuario=usuario, endpoint="https://push.example/1", p256dh="a", auth="b")
+    hoje = timezone.localdate()
+    Tarefa.objects.create(plantio=plantio, descricao="Aplicar defensivo", data=hoje)
+
+    with patch(
+        "notifications.services.webpush",
+        side_effect=[WebPushException("erro temporario", response=_FakeResponse(500)), None],
+    ) as mock_webpush:
+        primeiro_resultado = enviar_notificacoes_do_dia(hoje=hoje)
+        segundo_resultado = enviar_notificacoes_do_dia(hoje=hoje)
+
+    assert mock_webpush.call_count == 2
+    assert primeiro_resultado == {"tarefas_notificadas": 0, "subscriptions_removidas": 0}
+    assert segundo_resultado == {"tarefas_notificadas": 1, "subscriptions_removidas": 0}
+
+
+def test_excecao_nao_prevista_e_tratada_como_falha_transitoria():
+    usuario, plantio = _criar_plantio_e_usuario()
+    subscription = PushSubscription.objects.create(usuario=usuario, endpoint="https://push.example/1", p256dh="a", auth="b")
+    hoje = timezone.localdate()
+    tarefa = Tarefa.objects.create(plantio=plantio, descricao="Aplicar defensivo", data=hoje)
+
+    with patch("notifications.services.webpush", side_effect=ConnectionError("timeout de rede")):
+        resultado = enviar_notificacoes_do_dia(hoje=hoje)
+
+    assert resultado == {"tarefas_notificadas": 0, "subscriptions_removidas": 0}
+    assert PushSubscription.objects.filter(id=subscription.id).exists()
+    tarefa.refresh_from_db()
+    assert tarefa.notificado_em is None
+
+
+def test_pelo_menos_um_sucesso_marca_tarefa_como_notificada():
+    usuario, plantio = _criar_plantio_e_usuario()
+    PushSubscription.objects.create(usuario=usuario, endpoint="https://push.example/1", p256dh="a", auth="b")
+    PushSubscription.objects.create(usuario=usuario, endpoint="https://push.example/2", p256dh="c", auth="d")
+    hoje = timezone.localdate()
+    tarefa = Tarefa.objects.create(plantio=plantio, descricao="Aplicar defensivo", data=hoje)
+
+    with patch(
+        "notifications.services.webpush",
+        side_effect=[None, WebPushException("erro temporario", response=_FakeResponse(500))],
+    ):
+        resultado = enviar_notificacoes_do_dia(hoje=hoje)
+
+    assert resultado == {"tarefas_notificadas": 1, "subscriptions_removidas": 0}
+    tarefa.refresh_from_db()
+    assert tarefa.notificado_em is not None
+
+
+def test_tarefa_sem_subscription_e_marcada_como_notificada():
+    usuario, plantio = _criar_plantio_e_usuario()
+    hoje = timezone.localdate()
+    tarefa = Tarefa.objects.create(plantio=plantio, descricao="Aplicar defensivo", data=hoje)
+
+    with patch("notifications.services.webpush") as mock_webpush:
+        resultado = enviar_notificacoes_do_dia(hoje=hoje)
+
+    assert mock_webpush.call_count == 0
+    assert resultado == {"tarefas_notificadas": 0, "subscriptions_removidas": 0}
+    tarefa.refresh_from_db()
+    assert tarefa.notificado_em is not None, (
+        "tarefa sem dispositivo registrado deve ser marcada como notificada "
+        "para nao ficar pendente para sempre"
+    )
 
 
 def test_rodar_duas_vezes_no_mesmo_dia_nao_duplica_envio():
