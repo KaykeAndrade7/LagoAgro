@@ -1,7 +1,7 @@
 import secrets
 
 from django.conf import settings
-from rest_framework import viewsets
+from rest_framework import mixins, viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,7 +13,20 @@ from .serializers import PushSubscriptionSerializer
 from .services import enviar_notificacoes_do_dia
 
 
-class PushSubscriptionViewSet(UsuarioScopedQuerySetMixin, viewsets.ModelViewSet):
+class PushSubscriptionViewSet(
+    UsuarioScopedQuerySetMixin,
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    # Deliberadamente NAO um ModelViewSet: update/partial_update nunca foram
+    # suportados por design (ver perform_create abaixo) e um PATCH/PUT com o
+    # `endpoint` de outra subscription do mesmo usuario bateria na constraint
+    # unique=True do model sem o UniqueValidator (desligado so pra create),
+    # gerando IntegrityError -> 500 nao tratado. Restringir as acoes evita a
+    # rota por completo (405) em vez de tratar o erro.
     queryset = PushSubscription.objects.all()
     serializer_class = PushSubscriptionSerializer
     usuario_lookup = "usuario"
@@ -49,7 +62,7 @@ class DispararNotificacoesView(APIView):
     def post(self, request):
         secret_recebido = request.headers.get("X-Notification-Secret", "")
         secret_esperado = settings.NOTIFICATION_TRIGGER_SECRET
-        if not secret_esperado or not secrets.compare_digest(secret_recebido, secret_esperado):
+        if not secret_esperado or not secrets.compare_digest(secret_recebido.encode(), secret_esperado.encode()):
             return Response({"detail": "Não autorizado."}, status=403)
 
         resultado = enviar_notificacoes_do_dia()

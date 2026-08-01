@@ -80,7 +80,7 @@ def test_envia_para_todas_as_subscriptions_do_usuario():
         resultado = enviar_notificacoes_do_dia(hoje=hoje)
 
     assert mock_webpush.call_count == 2
-    assert resultado["tarefas_notificadas"] == 2
+    assert resultado["tarefas_notificadas"] == 1
 
 
 def test_subscription_expirada_e_removida_em_410():
@@ -180,6 +180,31 @@ def test_tarefa_sem_subscription_e_marcada_como_notificada():
         "tarefa sem dispositivo registrado deve ser marcada como notificada "
         "para nao ficar pendente para sempre"
     )
+
+
+def test_cada_usuario_recebe_push_apenas_das_proprias_subscriptions():
+    usuario1, plantio1 = _criar_plantio_e_usuario("produtor1")
+    usuario2, plantio2 = _criar_plantio_e_usuario("produtor2")
+    subscription1 = PushSubscription.objects.create(
+        usuario=usuario1, endpoint="https://push.example/produtor1", p256dh="a", auth="b"
+    )
+    subscription2 = PushSubscription.objects.create(
+        usuario=usuario2, endpoint="https://push.example/produtor2", p256dh="c", auth="d"
+    )
+    hoje = timezone.localdate()
+    Tarefa.objects.create(plantio=plantio1, descricao="Tarefa do produtor1", data=hoje)
+    Tarefa.objects.create(plantio=plantio2, descricao="Tarefa do produtor2", data=hoje)
+
+    with patch("notifications.services.webpush") as mock_webpush:
+        resultado = enviar_notificacoes_do_dia(hoje=hoje)
+
+    assert mock_webpush.call_count == 2
+    assert resultado["tarefas_notificadas"] == 2
+
+    endpoints_chamados = {
+        call.kwargs["subscription_info"]["endpoint"] for call in mock_webpush.call_args_list
+    }
+    assert endpoints_chamados == {subscription1.endpoint, subscription2.endpoint}
 
 
 def test_rodar_duas_vezes_no_mesmo_dia_nao_duplica_envio():

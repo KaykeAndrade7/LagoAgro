@@ -84,3 +84,23 @@ def test_requisicao_sem_token_retorna_401():
     response = client.get("/api/push-subscriptions/")
 
     assert response.status_code == 401
+
+
+def test_patch_subscription_retorna_405(criar_usuario_autenticado):
+    usuario, client = criar_usuario_autenticado()
+    subscription = PushSubscription.objects.create(usuario=usuario, endpoint="https://push.example/1", p256dh="a", auth="b")
+
+    response = client.patch(f"/api/push-subscriptions/{subscription.id}/", {"p256dh": "outra"})
+
+    assert response.status_code == 405
+
+
+def test_put_subscription_retorna_405(criar_usuario_autenticado):
+    usuario, client = criar_usuario_autenticado()
+    subscription = PushSubscription.objects.create(usuario=usuario, endpoint="https://push.example/1", p256dh="a", auth="b")
+
+    response = client.put(f"/api/push-subscriptions/{subscription.id}/", {
+        "endpoint": "https://push.example/1", "p256dh": "outra", "auth": "b",
+    })
+
+    assert response.status_code == 405
