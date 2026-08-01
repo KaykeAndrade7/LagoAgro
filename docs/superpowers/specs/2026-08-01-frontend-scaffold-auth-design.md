@@ -97,6 +97,48 @@ falhar, limpa o `AuthContext` e redireciona para `/login`. Nunca mais que
 uma tentativa de refresh por chamada (evita loop infinito se o refresh
 também retornar 401).
 
+**Correção em relação ao design original (revisão final do branch, commit
+`7334cfa` neste worktree):** o pseudocódigo original de `refreshAccessToken()`
+não era single-flight, não tinha nenhum consumidor central pra
+`AuthExpiredError` fora do `bootstrap()`, e não excluía `/auth/login/` da
+guarda de retry em 401. Os três eram defeitos do próprio plano, só visíveis
+ao cruzar com a configuração real do backend (`ROTATE_REFRESH_TOKENS` +
+`BLACKLIST_AFTER_ROTATION` em `lagoagro/core/settings.py`):
+
+- **Race condition real, não hipotética.** `main.tsx` usa `<StrictMode>`
+  (padrão do scaffold Vite), que em dev invoca `useEffect` duas vezes ao
+  montar — o `bootstrap()` do `AuthContext` disparava dois
+  `refreshAccessToken()` quase simultâneos com o mesmo cookie de refresh.
+  Como o backend rotaciona e faz blacklist do refresh token a cada uso bem
+  -sucedido, a segunda chamada tomava 401 do backend e deslogava uma sessão
+  válida — intermitente em `npm run dev`, e o problema só cresceria quando
+  fatias futuras adicionassem múltiplas queries paralelas que podem expirar
+  juntas. Corrigido com deduplicação por promise em voo (`refreshInFlight`):
+  chamadas concorrentes reaproveitam a mesma promise, garantindo no máximo
+  um `POST /auth/refresh/` em voo por vez.
+- **`AuthExpiredError` sem consumidor fora do `bootstrap()`.** A spec já
+  prometia "limpa o `AuthContext` e redireciona para `/login`" quando o
+  refresh falha em qualquer chamada autenticada, mas isso só estava
+  implementado dentro do `try/catch` do `bootstrap()`. Qualquer chamada de
+  domínio futura (fatias 2+) que recebesse `AuthExpiredError` fora do
+  bootstrap não tinha handler nenhum — viraria unhandled rejection em vez de
+  deslogar o usuário. Corrigido com um callback central,
+  `setAuthExpiredHandler()`, exportado por `api-client.ts` e registrado pelo
+  `AuthContext` num `useEffect` próprio (antes do `useEffect` de bootstrap).
+- **Guarda de retry incompleta.** A condição original só excluía
+  `/auth/refresh/` do retry-on-401 (evita loop infinito óbvio), mas não
+  excluía `/auth/login/`, que retorna 401 legitimamente quando a senha está
+  errada — isso não significa "sessão expirada". Sem a exclusão, uma senha
+  errada disparava uma tentativa de refresh desnecessária; pior, se já
+  existisse um cookie de refresh válido (usuário testando senha errada com
+  sessão ativa em outra aba), o refresh **tinha sucesso**, rotacionando e
+  fazendo blacklist do token da sessão real como efeito colateral de uma
+  tentativa de login que não era pra mexer em nada. Corrigido excluindo
+  também `/auth/login/` da guarda.
+
+Testes cobrindo os três casos em `frontend/src/lib/api-client.test.ts` e
+`frontend/src/auth/AuthContext.test.tsx`.
+
 **Logout:** chama `POST /api/auth/logout/`, limpa o `AuthContext`
 independentemente da resposta (logout é idempotente no backend — mesmo que
 a chamada falhe por rede, o usuário some da UI).
