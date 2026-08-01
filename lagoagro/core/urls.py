@@ -20,6 +20,7 @@ from rest_framework.routers import DefaultRouter
 
 from core.auth_views import LoginView, LogoutView, RefreshView
 from crops.views import CulturaViewSet
+from finance.views import DiariaViewSet, LancamentoFinanceiroViewSet, TrabalhadorViewSet
 from harvest.views import ColheitaViewSet
 from inputs.views import AplicacaoInsumoViewSet, InsumoViewSet
 from plantings.views import PlantioViewSet
@@ -35,6 +36,9 @@ router.register("insumos", InsumoViewSet)
 router.register("aplicacoes-insumo", AplicacaoInsumoViewSet)
 router.register("tarefas", TarefaViewSet)
 router.register("colheitas", ColheitaViewSet)
+router.register("lancamentos-financeiros", LancamentoFinanceiroViewSet)
+router.register("trabalhadores", TrabalhadorViewSet)
+router.register("diarias", DiariaViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
