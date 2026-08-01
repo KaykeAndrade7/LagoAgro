@@ -23,6 +23,7 @@ from crops.views import CulturaViewSet
 from finance.views import DiariaViewSet, LancamentoFinanceiroViewSet, TrabalhadorViewSet
 from harvest.views import ColheitaViewSet
 from inputs.views import AplicacaoInsumoViewSet, InsumoViewSet
+from notifications.views import PushSubscriptionViewSet
 from plantings.views import PlantioViewSet
 from properties.views import PropriedadeViewSet, TalhaoViewSet
 from tasks.views import TarefaViewSet
@@ -39,6 +40,7 @@ router.register("colheitas", ColheitaViewSet)
 router.register("lancamentos-financeiros", LancamentoFinanceiroViewSet)
 router.register("trabalhadores", TrabalhadorViewSet)
 router.register("diarias", DiariaViewSet)
+router.register("push-subscriptions", PushSubscriptionViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
