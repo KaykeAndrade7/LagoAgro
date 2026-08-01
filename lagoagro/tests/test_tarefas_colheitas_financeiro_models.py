@@ -33,6 +33,14 @@ def test_tarefa_pertence_a_um_plantio_e_comeca_nao_concluida():
     assert tarefa.concluida is False
 
 
+def test_tarefa_notificado_em_comeca_nulo():
+    plantio = _criar_plantio()
+
+    tarefa = Tarefa.objects.create(plantio=plantio, descricao="Aplicar defensivo", data="2026-02-01")
+
+    assert tarefa.notificado_em is None
+
+
 def test_colheita_registra_classificacao_e_quantidade():
     plantio = _criar_plantio()
 
