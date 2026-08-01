@@ -1,7 +1,9 @@
+from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
-from properties.models import Propriedade
+from properties.models import Propriedade, Talhao
 
 
 def test_criar_propriedade_associa_usuario_autenticado(criar_usuario_autenticado):
@@ -59,9 +61,44 @@ def test_criar_talhao_com_propriedade_de_outro_usuario_retorna_400(criar_usuario
     assert response.status_code == 400
 
 
+def test_listar_talhoes_so_retorna_do_usuario_autenticado(criar_usuario_autenticado):
+    usuario, client = criar_usuario_autenticado()
+    outro = get_user_model().objects.create_user(username="produtor2", password="senha123")
+    propriedade = Propriedade.objects.create(usuario=usuario, nome="Sitio Boa Vista")
+    propriedade_outro = Propriedade.objects.create(usuario=outro, nome="Sitio de outro")
+    Talhao.objects.create(propriedade=propriedade, nome="Talhao 1", area=Decimal("2.50"), tipo_solo="argiloso")
+    Talhao.objects.create(propriedade=propriedade_outro, nome="Talhao 2", area=Decimal("1.00"), tipo_solo="arenoso")
+
+    response = client.get("/api/talhoes/")
+
+    assert response.status_code == 200
+    assert len(response.data) == 1
+
+
+def test_acessar_talhao_de_outro_usuario_retorna_404(criar_usuario_autenticado):
+    _, client = criar_usuario_autenticado()
+    outro = get_user_model().objects.create_user(username="produtor2", password="senha123")
+    propriedade_outro = Propriedade.objects.create(usuario=outro, nome="Sitio de outro")
+    talhao_outro = Talhao.objects.create(
+        propriedade=propriedade_outro, nome="Talhao 2", area=Decimal("1.00"), tipo_solo="arenoso"
+    )
+
+    response = client.get(f"/api/talhoes/{talhao_outro.id}/")
+
+    assert response.status_code == 404
+
+
 def test_requisicao_sem_token_retorna_401():
     client = APIClient()
 
     response = client.get("/api/propriedades/")
+
+    assert response.status_code == 401
+
+
+def test_requisicao_sem_token_em_talhoes_retorna_401():
+    client = APIClient()
+
+    response = client.get("/api/talhoes/")
 
     assert response.status_code == 401
