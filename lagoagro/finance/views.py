@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -35,3 +35,15 @@ class DiariaViewSet(UsuarioScopedQuerySetMixin, viewsets.ModelViewSet):
     queryset = Diaria.objects.all()
     serializer_class = DiariaSerializer
     usuario_lookup = "plantio__talhao__propriedade__usuario"
+
+    def destroy(self, request, *args, **kwargs):
+        # Diaria com lancamento setado ja foi paga (acao pagar-diarias) - a
+        # trilha de pagamento nao pode sumir, senao o LancamentoFinanceiro
+        # gerado fica orfao (mesma razao do PROTECT no model).
+        instance = self.get_object()
+        if instance.lancamento_id is not None:
+            return Response(
+                {"detail": "Não é possível excluir uma diária já paga."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().destroy(request, *args, **kwargs)

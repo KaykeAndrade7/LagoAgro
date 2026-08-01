@@ -35,3 +35,13 @@ class DiariaSerializer(serializers.ModelSerializer):
         model = Diaria
         fields = ["id", "trabalhador", "plantio", "data", "valor", "lancamento"]
         read_only_fields = ["valor", "lancamento"]
+
+    def validate(self, attrs):
+        # Uma diaria ja paga (lancamento setado via acao pagar-diarias) e
+        # trilha de pagamento fechada - alterar trabalhador/plantio/data
+        # deixaria o valor do LancamentoFinanceiro ja gerado incoerente.
+        if self.instance is not None and self.instance.lancamento_id is not None:
+            raise serializers.ValidationError(
+                "Não é possível alterar uma diária já paga."
+            )
+        return attrs
