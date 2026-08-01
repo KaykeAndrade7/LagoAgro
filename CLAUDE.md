@@ -49,6 +49,7 @@ lagoagro/
 ├── tasks/                 # Tarefa
 ├── harvest/               # Colheita (classificação)
 ├── finance/               # LancamentoFinanceiro
+├── notifications/         # PushSubscription, job diario de notificacao (ADR 006)
 ├── domain/                # lógica pura de cálculo, SEM dependência de Django
 │   ├── cycle_calc.py      # dias restantes, fase atual
 │   └── safety_calc.py     # data segura de colheita (carência)
@@ -83,6 +84,7 @@ AplicacaoInsumo (plantio, insumo, data, quantidade)
 Tarefa (plantio, descricao, data, concluida)
 Colheita (plantio, data, classificacao, quantidade)
 LancamentoFinanceiro (plantio, valor, data, descricao)
+PushSubscription (usuario, endpoint, p256dh, auth)
 ```
 
 ## Convenção de commits
@@ -95,7 +97,8 @@ Este projeto usa **Conventional Commits**. Todo commit deve seguir:
 
 Tipos: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`, `perf`.
 Escopos válidos (batem com a estrutura de pastas): `properties`, `crops`,
-`plantings`, `inputs`, `tasks`, `harvest`, `finance`, `domain`, `auth`, `adr`.
+`plantings`, `inputs`, `tasks`, `harvest`, `finance`, `notifications`,
+`domain`, `auth`, `adr`.
 
 Exemplos:
 - `feat(plantings): adicionar model Plantio com cálculo de dias restantes`

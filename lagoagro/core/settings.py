@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'tasks',
     'harvest',
     'finance',
+    'notifications',
 ]
 
 MIDDLEWARE = [
@@ -125,6 +126,15 @@ REFRESH_COOKIE_SAMESITE = os.environ.get('REFRESH_COOKIE_SAMESITE', 'Lax')
 
 if REFRESH_COOKIE_SAMESITE.lower() == 'none' and not REFRESH_COOKIE_SECURE:
     raise ImproperlyConfigured('SameSite=None exige Secure=True (ver ADR 003).')
+
+
+# Web Push (ADR 005) + job diario de notificacoes (ADR 006). Chaves VAPID
+# reais e o NOTIFICATION_TRIGGER_SECRET de producao sao configurados no
+# Task #9 (Deploy) - o fallback vazio so serve pra rodar localmente.
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
+VAPID_CLAIM_EMAIL = os.environ.get('VAPID_CLAIM_EMAIL', 'mailto:admin@example.com')
+NOTIFICATION_TRIGGER_SECRET = os.environ.get('NOTIFICATION_TRIGGER_SECRET', '')
 
 
 # Password validation
