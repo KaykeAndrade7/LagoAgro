@@ -20,12 +20,14 @@ from rest_framework.routers import DefaultRouter
 
 from core.auth_views import LoginView, LogoutView, RefreshView
 from crops.views import CulturaViewSet
+from plantings.views import PlantioViewSet
 from properties.views import PropriedadeViewSet, TalhaoViewSet
 
 router = DefaultRouter()
 router.register("propriedades", PropriedadeViewSet)
 router.register("talhoes", TalhaoViewSet)
 router.register("culturas", CulturaViewSet)
+router.register("plantios", PlantioViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
