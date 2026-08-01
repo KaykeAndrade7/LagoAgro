@@ -114,3 +114,7 @@ Models de todas as entidades, autenticação JWT multi-tenant (`core/auth_views.
 `core/permissions.py`) e as regras de negócio de finance já estão implementados
 e cobertos por testes. Consultar `docs/adr/` para o histórico de decisões e
 `docs/requirements.md` para o que ainda falta por RF.
+
+O backend de RF11 (job de Web Push, app `notifications`) está implementado e
+testado, mas ainda não conectado à produção — chaves VAPID reais, o disparo
+via cron e o segredo de produção ficam para a Task #9 (Deploy).
