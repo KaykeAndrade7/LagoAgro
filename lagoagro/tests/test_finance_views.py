@@ -203,6 +203,22 @@ def test_requisicao_sem_token_retorna_401():
     assert response.status_code == 401
 
 
+def test_requisicao_sem_token_em_trabalhadores_retorna_401():
+    client = APIClient()
+
+    response = client.get("/api/trabalhadores/")
+
+    assert response.status_code == 401
+
+
+def test_requisicao_sem_token_em_diarias_retorna_401():
+    client = APIClient()
+
+    response = client.get("/api/diarias/")
+
+    assert response.status_code == 401
+
+
 # --- Diaria paga: imutavel ---
 
 def test_patch_em_diaria_paga_e_rejeitado(criar_usuario_autenticado):
