@@ -201,3 +201,30 @@ def test_requisicao_sem_token_retorna_401():
     response = client.get("/api/lancamentos-financeiros/")
 
     assert response.status_code == 401
+
+
+# --- Diaria paga: imutavel ---
+
+def test_patch_em_diaria_paga_e_rejeitado(criar_usuario_autenticado):
+    usuario, client = criar_usuario_autenticado()
+    plantio = _criar_plantio(usuario)
+    trabalhador = Trabalhador.objects.create(usuario=usuario, nome="Joao", valor_diaria=Decimal("120.00"))
+    diaria = Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-01")
+    client.post(f"/api/trabalhadores/{trabalhador.id}/pagar-diarias/")
+
+    response = client.patch(f"/api/diarias/{diaria.id}/", {"data": "2026-02-02"})
+
+    assert response.status_code == 400
+
+
+def test_delete_em_diaria_paga_e_rejeitado(criar_usuario_autenticado):
+    usuario, client = criar_usuario_autenticado()
+    plantio = _criar_plantio(usuario)
+    trabalhador = Trabalhador.objects.create(usuario=usuario, nome="Joao", valor_diaria=Decimal("120.00"))
+    diaria = Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-01")
+    client.post(f"/api/trabalhadores/{trabalhador.id}/pagar-diarias/")
+
+    response = client.delete(f"/api/diarias/{diaria.id}/")
+
+    assert response.status_code in (400, 409)
+    assert Diaria.objects.filter(id=diaria.id).exists()
