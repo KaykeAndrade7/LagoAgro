@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { apiRequest, setAccessToken, ApiError, AuthExpiredError } from './api-client'
+import { apiRequest, refreshAccessToken, setAccessToken, ApiError, AuthExpiredError } from './api-client'
 
 describe('apiRequest', () => {
   beforeEach(() => {
@@ -69,5 +69,44 @@ describe('apiRequest', () => {
     const result = await apiRequest('/plantios/1/', { method: 'DELETE' })
 
     expect(result).toBeUndefined()
+  })
+
+  it('em 401 no /auth/login/, nao tenta refresh e lanca ApiError (nao AuthExpiredError)', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ detail: 'Credenciais invalidas.' }), { status: 401 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    let caught: unknown
+    try {
+      await apiRequest('/auth/login/', { method: 'POST', body: { username: 'x', password: 'errada' } })
+    } catch (error) {
+      caught = error
+    }
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(caught).toBeInstanceOf(ApiError)
+    expect(caught).not.toBeInstanceOf(AuthExpiredError)
+    expect(caught).toMatchObject({ status: 401 } as Partial<ApiError>)
+  })
+})
+
+describe('refreshAccessToken', () => {
+  beforeEach(() => {
+    setAccessToken(null)
+    vi.restoreAllMocks()
+  })
+
+  it('e single-flight: chamadas concorrentes reaproveitam a mesma promise e disparam um unico fetch', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access: 'token-unico' }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const [a, b] = await Promise.all([refreshAccessToken(), refreshAccessToken()])
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(a).toBe('token-unico')
+    expect(b).toBe('token-unico')
   })
 })
