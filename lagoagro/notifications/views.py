@@ -1,9 +1,16 @@
+import secrets
+
+from django.conf import settings
 from rest_framework import viewsets
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from core.permissions import UsuarioScopedQuerySetMixin
 
 from .models import PushSubscription
 from .serializers import PushSubscriptionSerializer
+from .services import enviar_notificacoes_do_dia
 
 
 class PushSubscriptionViewSet(UsuarioScopedQuerySetMixin, viewsets.ModelViewSet):
@@ -28,3 +35,22 @@ class PushSubscriptionViewSet(UsuarioScopedQuerySetMixin, viewsets.ModelViewSet)
             },
         )
         serializer.instance = subscription
+
+
+class DispararNotificacoesView(APIView):
+    """Endpoint chamado pelo cron externo (ADR 006) - sem JWT, protegido por
+    chave secreta no header (threat-model.md: comparacao com
+    secrets.compare_digest, nunca em query string, falha fechado se a chave
+    nao estiver configurada)."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        secret_recebido = request.headers.get("X-Notification-Secret", "")
+        secret_esperado = settings.NOTIFICATION_TRIGGER_SECRET
+        if not secret_esperado or not secrets.compare_digest(secret_recebido, secret_esperado):
+            return Response({"detail": "Não autorizado."}, status=403)
+
+        resultado = enviar_notificacoes_do_dia()
+        return Response(resultado)
