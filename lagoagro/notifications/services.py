@@ -20,15 +20,19 @@ def enviar_notificacoes_do_dia(hoje=None):
     removidas = 0
     for tarefa in tarefas:
         usuario = tarefa.plantio.talhao.propriedade.usuario
-        for subscription in usuario.push_subscriptions.all():
+        subscriptions = list(usuario.push_subscriptions.all())
+        pelo_menos_um_sucesso = False
+        for subscription in subscriptions:
             enviado, expirada = _enviar_push(subscription, tarefa)
             if enviado:
                 enviadas += 1
+                pelo_menos_um_sucesso = True
             if expirada:
                 subscription.delete()
                 removidas += 1
-        tarefa.notificado_em = timezone.now()
-        tarefa.save(update_fields=["notificado_em"])
+        if not subscriptions or pelo_menos_um_sucesso:
+            tarefa.notificado_em = timezone.now()
+            tarefa.save(update_fields=["notificado_em"])
 
     return {"tarefas_notificadas": enviadas, "subscriptions_removidas": removidas}
 
@@ -50,3 +54,5 @@ def _enviar_push(subscription, tarefa):
         status_code = exc.response.status_code if exc.response is not None else None
         expirada = status_code in (404, 410)
         return False, expirada
+    except Exception:
+        return False, False
