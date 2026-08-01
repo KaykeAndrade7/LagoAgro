@@ -59,6 +59,8 @@ lagoagro/
 Regra importante: `domain/` deve ser testável sem banco de dados e sem
 Django rodando — são funções Python puras.
 
+Frontend em frontend/ na raiz do repo (React + Vite + TypeScript + Tailwind, ver docs/superpowers/specs/2026-08-01-frontend-scaffold-auth-design.md).
+
 ## Regras de negócio já validadas com o usuário final
 
 - **Sem** cálculo automático de dosagem por área — o usuário só registra o
@@ -98,7 +100,7 @@ Este projeto usa **Conventional Commits**. Todo commit deve seguir:
 Tipos: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`, `perf`.
 Escopos válidos (batem com a estrutura de pastas): `properties`, `crops`,
 `plantings`, `inputs`, `tasks`, `harvest`, `finance`, `notifications`,
-`domain`, `auth`, `adr`.
+`domain`, `auth`, `frontend`, `adr`.
 
 Exemplos:
 - `feat(plantings): adicionar model Plantio com cálculo de dias restantes`
