@@ -1,3 +1,9 @@
-from django.shortcuts import render
+from rest_framework import viewsets
 
-# Create your views here.
+from .models import Cultura
+from .serializers import CulturaSerializer
+
+
+class CulturaViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Cultura.objects.all()
+    serializer_class = CulturaSerializer

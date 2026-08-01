@@ -19,11 +19,13 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from core.auth_views import LoginView, LogoutView, RefreshView
+from crops.views import CulturaViewSet
 from properties.views import PropriedadeViewSet, TalhaoViewSet
 
 router = DefaultRouter()
 router.register("propriedades", PropriedadeViewSet)
 router.register("talhoes", TalhaoViewSet)
+router.register("culturas", CulturaViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
