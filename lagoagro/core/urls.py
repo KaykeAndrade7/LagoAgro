@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from core.auth_views import LoginView, LogoutView, RefreshView
+from core.auth_views import LoginView, LogoutView, MeView, RefreshView
 from crops.views import CulturaViewSet
 from finance.views import DiariaViewSet, LancamentoFinanceiroViewSet, TrabalhadorViewSet
 from harvest.views import ColheitaViewSet
@@ -47,6 +47,7 @@ urlpatterns = [
     path('api/auth/login/', LoginView.as_view(), name='auth-login'),
     path('api/auth/refresh/', RefreshView.as_view(), name='auth-refresh'),
     path('api/auth/logout/', LogoutView.as_view(), name='auth-logout'),
+    path('api/auth/me/', MeView.as_view(), name='auth-me'),
     path('api/notificacoes/disparar/', DispararNotificacoesView.as_view(), name='notificacoes-disparar'),
     path('api/', include(router.urls)),
 ]
