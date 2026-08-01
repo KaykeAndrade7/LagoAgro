@@ -2,15 +2,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
+import { router } from './routes'
 
 describe('roteamento', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.restoreAllMocks()
     // routes.tsx cria `router` com createBrowserRouter no escopo do modulo,
-    // entao a localizacao do navegador (jsdom) persiste entre os `it()` deste
-    // arquivo, ja que todos importam o mesmo `App`/`router`. Sem este reset,
-    // um teste que navega para /login "vaza" essa URL para o proximo teste.
-    window.history.pushState({}, '', '/')
+    // entao a localizacao efetiva do router (router.state.location) persiste
+    // entre os `it()` deste arquivo, ja que todos importam o mesmo
+    // `App`/`router`. window.history.pushState() sozinho NAO resincroniza
+    // essa localizacao interna do react-router (ele so escuta 'popstate' ou
+    // chamadas explicitas a router.navigate()), entao o reset precisa passar
+    // pela API real do router para isolar os testes de verdade.
+    await router.navigate('/')
   })
 
   it('usuario deslogado tentando ver o dashboard e redirecionado pro login', async () => {
