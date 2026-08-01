@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { apiRequest, refreshAccessToken, setAccessToken } from '../lib/api-client'
+import { apiRequest, refreshAccessToken, setAccessToken, setAuthExpiredHandler } from '../lib/api-client'
 
 type Usuario = { id: number; username: string }
 
@@ -15,6 +15,19 @@ const AuthContext = createContext<AuthState | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  // Registrado antes de bootstrap() rodar (o proprio bootstrap pode
+  // disparar AuthExpiredError via refreshAccessToken) para que qualquer
+  // AuthExpiredError - dentro ou fora do bootstrap, ex. fatias futuras
+  // chamando apiRequest depois que a sessao ja expirou - limpe o contexto
+  // e mande o usuario pra /login mesmo sem passar pelo catch do bootstrap.
+  useEffect(() => {
+    setAuthExpiredHandler(() => {
+      setAccessToken(null)
+      setUsuario(null)
+    })
+    return () => setAuthExpiredHandler(null)
+  }, [])
 
   useEffect(() => {
     async function bootstrap() {
