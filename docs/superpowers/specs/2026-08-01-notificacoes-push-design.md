@@ -105,24 +105,29 @@ def enviar_notificacoes_do_dia(hoje=None):
     hoje = hoje or timezone.localdate()
     tarefas = (
         Tarefa.objects
-        .filter(concluida=False, data=hoje)
+        .filter(concluida=False, data=hoje, plantio__talhao__propriedade__usuario__is_active=True)
         .filter(Q(notificado_em__isnull=True) | Q(notificado_em__date__lt=hoje))
         .select_related("plantio__talhao__propriedade__usuario")
     )
-    enviadas = 0
+    tarefas_notificadas = 0
     removidas = 0
     for tarefa in tarefas:
         usuario = tarefa.plantio.talhao.propriedade.usuario
-        for subscription in usuario.push_subscriptions.all():
+        subscriptions = list(usuario.push_subscriptions.all())
+        pelo_menos_um_sucesso = False
+        for subscription in subscriptions:
             enviado, stale = _enviar_push(subscription, tarefa)
             if enviado:
-                enviadas += 1
+                pelo_menos_um_sucesso = True
             if stale:
                 subscription.delete()
                 removidas += 1
-        tarefa.notificado_em = timezone.now()
-        tarefa.save(update_fields=["notificado_em"])
-    return {"tarefas_notificadas": enviadas, "subscriptions_removidas": removidas}
+        if not subscriptions or pelo_menos_um_sucesso:
+            tarefa.notificado_em = timezone.now()
+            tarefa.save(update_fields=["notificado_em"])
+            if pelo_menos_um_sucesso:
+                tarefas_notificadas += 1
+    return {"tarefas_notificadas": tarefas_notificadas, "subscriptions_removidas": removidas}
 ```
 
 `_enviar_push` chama `pywebpush.webpush(...)` dentro de um `try/except
@@ -130,12 +135,21 @@ WebPushException`. Um `404`/`410` na resposta significa que o push service
 do navegador considera a subscription permanentemente inválida →
 `stale=True`, a subscription é apagada. Qualquer outro erro (rede, 5xx
 temporário do push service) → `stale=False`, a subscription é mantida e a
-tentativa simplesmente não conta como enviada — não há retry dentro do
-mesmo job (o próximo cron diário tentará de novo, já que `notificado_em` só
-é setado por tarefa após o loop de subscriptions, não por subscription
-individual — uma falha temporária numa subscription não impede que a tarefa
-seja marcada, mas o RF11 é "notificar no dia", não "garantir entrega": está
-consistente com o nível de robustez que ADR 006 já aceitou como suficiente).
+tentativa simplesmente não conta como enviada.
+
+**Correção em relação ao design original (Task 4):** a primeira versão deste
+pseudocódigo marcava `notificado_em` incondicionalmente após o loop de
+subscriptions, e a versão anterior deste documento argumentava que isso era
+aceitável porque "RF11 é 'notificar no dia', não 'garantir entrega'". Isso
+foi revisto durante a implementação (commits `a33ab9b` e `dce195e` neste
+worktree): marcar `notificado_em` mesmo quando todos os envios falharem
+faria uma falha transitória (rede, 5xx temporário do push service) perder
+silenciosa e permanentemente a notificação daquele dia — `Tarefa.data` é um
+campo fixo, não recorrente, então não existe um "outro dia" em que a tarefa
+volte a ficar elegível. Por isso `notificado_em` só é setado quando não há
+subscriptions (nada a enviar) ou quando pelo menos um envio teve sucesso;
+falha total mantém a tarefa elegível para retry no mesmo dia, no próximo
+disparo do cron.
 
 **Chamadores:**
 - `python manage.py enviar_notificacoes_do_dia` (management command, útil
