@@ -10,6 +10,9 @@ from .models import Diaria, LancamentoFinanceiro
 # Tudo-ou-nada: uma falha no meio do loop nao pode deixar um lancamento orfao
 # com as diarias daquele plantio ainda marcadas como pendentes (double-booking
 # na proxima chamada).
+# Invariante nao verificada aqui: assume que toda Diaria de `trabalhador` tem
+# plantio pertencente ao mesmo usuario do trabalhador - isso e garantido pela
+# validacao de FKs na API (serializers), nao por esta funcao.
 @transaction.atomic
 def pagar_diarias_pendentes(trabalhador):
     diarias_pendentes = Diaria.objects.filter(trabalhador=trabalhador, lancamento__isnull=True)
