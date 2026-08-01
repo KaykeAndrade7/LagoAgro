@@ -1,13 +1,17 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 
 export function LoginPage() {
-  const { login } = useAuth()
+  const { login, usuario, isLoading } = useAuth()
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  if (!isLoading && usuario) {
+    return <Navigate to="/" replace />
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -31,6 +35,8 @@ export function LoginPage() {
             value={username}
             onChange={(event) => setUsername(event.target.value)}
             className="block w-full border p-2"
+            autoComplete="username"
+            required
           />
         </div>
         <div>
@@ -41,6 +47,8 @@ export function LoginPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             className="block w-full border p-2"
+            autoComplete="current-password"
+            required
           />
         </div>
         {error && <p role="alert">{error}</p>}

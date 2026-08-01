@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { LoginPage } from './auth/LoginPage'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { AppShell } from './layout/AppShell'
@@ -16,4 +16,5 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+  { path: '*', element: <Navigate to="/" replace /> },
 ])
