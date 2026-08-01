@@ -83,3 +83,8 @@ class LogoutView(APIView):
         response = Response(status=status.HTTP_200_OK)
         _delete_refresh_cookie(response)
         return response
+
+
+class MeView(APIView):
+    def get(self, request):
+        return Response({"id": request.user.id, "username": request.user.username})

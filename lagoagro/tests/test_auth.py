@@ -122,3 +122,24 @@ def test_access_token_expirado_e_rejeitado():
 
     with pytest.raises(InvalidToken):
         JWTAuthentication().authenticate(request)
+
+
+def test_me_com_token_valido_retorna_dados_do_usuario():
+    usuario = _criar_usuario()
+    client = APIClient()
+    login_response = client.post("/api/auth/login/", {"username": "produtor1", "password": "senha123"})
+    access = login_response.data["access"]
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+
+    response = client.get("/api/auth/me/")
+
+    assert response.status_code == 200
+    assert response.data == {"id": usuario.id, "username": "produtor1"}
+
+
+def test_me_sem_token_retorna_401():
+    client = APIClient()
+
+    response = client.get("/api/auth/me/")
+
+    assert response.status_code == 401
