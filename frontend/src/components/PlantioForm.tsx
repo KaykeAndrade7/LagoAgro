@@ -12,7 +12,14 @@ const schema = z.object({
   status: z.enum(['em_andamento', 'colhido', 'cancelado']),
 })
 
-type PlantioFormValues = z.infer<typeof schema>
+// z.coerce.number() faz o tipo de *input* do campo (antes da coercao) ser `unknown`,
+// enquanto o tipo de *output* (depois da coercao) e `number`. O `Resolver` gerado pelo
+// zodResolver espera o tipo de input como TFieldValues do form; se tiparmos useForm com
+// o tipo de output (via z.infer, que e alias de z.output), o tsc reclama de incompatibilidade
+// entre `unknown` e `number`. Por isso separamos os dois tipos e usamos a assinatura de
+// 3 genericos do react-hook-form (TFieldValues, TContext, TTransformedValues).
+type PlantioFormInput = z.input<typeof schema>
+type PlantioFormValues = z.output<typeof schema>
 
 type PlantioFormProps = {
   talhoes: Talhao[]
@@ -27,7 +34,7 @@ export function PlantioForm({ talhoes, culturas, plantio, onSubmit, onCancel }: 
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<PlantioFormValues>({
+  } = useForm<PlantioFormInput, unknown, PlantioFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       talhao: plantio?.talhao ?? 0,
