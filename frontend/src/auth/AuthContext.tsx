@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { apiRequest, refreshAccessToken, setAccessToken, setAuthExpiredHandler } from '../lib/api-client'
+import { queryClient } from '../lib/query-client'
 
 type Usuario = { id: number; username: string }
 
@@ -25,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthExpiredHandler(() => {
       setAccessToken(null)
       setUsuario(null)
+      queryClient.clear()
     })
     return () => setAuthExpiredHandler(null)
   }, [])
@@ -66,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setAccessToken(null)
       setUsuario(null)
+      queryClient.clear()
     }
   }
 
