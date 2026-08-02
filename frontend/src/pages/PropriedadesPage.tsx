@@ -156,6 +156,7 @@ export function PropriedadesPage() {
       )}
       {formulario?.tipo === 'editar-propriedade' && (
         <PropriedadeForm
+          key={formulario.propriedade.id}
           propriedade={formulario.propriedade}
           onSubmit={(input) => atualizarPropriedadeMutation.mutate({ id: formulario.propriedade.id, input })}
           onCancel={() => setFormulario(null)}
