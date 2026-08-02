@@ -200,6 +200,14 @@ daqueles talhões. Excluir um Talhão cascateia para seus Plantios.
   fatia 1 (`setAuthExpiredHandler`) — nenhuma página desta fatia precisa
   de tratamento próprio para isso.
 
+**Nota de implementação (revisão final do branch, fatia 2/5):** o mapeamento
+de erro de mutação descrito acima NÃO foi implementado nesta fatia — as
+mutações das três páginas hoje não tratam falha (nem `onError`, nem
+`setError` no formulário, nem fechamento do diálogo/formulário em caso de
+erro). Adiado explicitamente para a fatia 3, por decisão do usuário
+(2026-08-02), para não expandir o escopo desta fatia. Rastrear como
+requisito pendente, não reintroduzir silenciosamente sem tratamento.
+
 ## Testes
 
 Mesmo padrão da fatia 1 (Vitest + React Testing Library + `user-event`,
