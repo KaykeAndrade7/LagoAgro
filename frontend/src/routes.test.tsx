@@ -65,3 +65,69 @@ describe('roteamento', () => {
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Entrar' })).toBeInTheDocument())
   })
 })
+
+describe('navegacao para as paginas de cadastro', () => {
+  beforeEach(async () => {
+    vi.restoreAllMocks()
+    await router.navigate('/')
+  })
+
+  it('link de Propriedades navega para a pagina de propriedades', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access: 'token-1' }), { status: 200 })) // refresh
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 1, username: 'produtor1' }), { status: 200 })) // me
+      // PropriedadesPage dispara 3 fetches paralelos (propriedades/talhoes/plantios); um
+      // unico objeto Response nao pode ser lido (.json()) mais de uma vez, entao usamos
+      // mockImplementation pra devolver uma Response nova a cada chamada em vez de
+      // mockResolvedValue (que reaproveitaria a mesma instancia e quebraria o body stream
+      // das chamadas concorrentes).
+      .mockImplementation(async () => new Response(JSON.stringify([]), { status: 200 })) // propriedades/talhoes/plantios
+    vi.stubGlobal('fetch', fetchMock)
+    const user = userEvent.setup()
+
+    render(<App />)
+    await waitFor(() => expect(screen.getByText(/Bem-vindo, produtor1/)).toBeInTheDocument())
+
+    await user.click(screen.getByRole('link', { name: 'Propriedades' }))
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Propriedades' })).toBeInTheDocument())
+  })
+
+  it('link de Culturas navega para a pagina de culturas', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access: 'token-1' }), { status: 200 })) // refresh
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 1, username: 'produtor1' }), { status: 200 })) // me
+      .mockImplementation(async () => new Response(JSON.stringify([]), { status: 200 })) // culturas
+    vi.stubGlobal('fetch', fetchMock)
+    const user = userEvent.setup()
+
+    render(<App />)
+    await waitFor(() => expect(screen.getByText(/Bem-vindo, produtor1/)).toBeInTheDocument())
+
+    await user.click(screen.getByRole('link', { name: 'Culturas' }))
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Culturas' })).toBeInTheDocument())
+  })
+
+  it('link de Plantios navega para a pagina de plantios', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access: 'token-1' }), { status: 200 })) // refresh
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 1, username: 'produtor1' }), { status: 200 })) // me
+      // PlantiosPage tambem dispara 3 fetches paralelos (plantios/talhoes/culturas); mesmo
+      // motivo do teste de Propriedades acima: mockImplementation evita reusar a mesma
+      // instancia de Response entre chamadas concorrentes.
+      .mockImplementation(async () => new Response(JSON.stringify([]), { status: 200 })) // plantios/talhoes/culturas
+    vi.stubGlobal('fetch', fetchMock)
+    const user = userEvent.setup()
+
+    render(<App />)
+    await waitFor(() => expect(screen.getByText(/Bem-vindo, produtor1/)).toBeInTheDocument())
+
+    await user.click(screen.getByRole('link', { name: 'Plantios' }))
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Plantios' })).toBeInTheDocument())
+  })
+})
