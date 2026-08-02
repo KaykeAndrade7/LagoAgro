@@ -116,6 +116,15 @@ export function PropriedadesPage() {
     )
   }
 
+  if (talhoesQuery.isError) {
+    return (
+      <div>
+        <p>Nao foi possivel carregar os talhoes.</p>
+        <button onClick={() => talhoesQuery.refetch()}>Tentar novamente</button>
+      </div>
+    )
+  }
+
   const propriedades = propriedadesQuery.data ?? []
   const talhoes = talhoesQuery.data ?? []
   const plantios = plantiosQuery.data ?? []
@@ -128,6 +137,9 @@ export function PropriedadesPage() {
         : 'Tem certeza que deseja excluir esta propriedade?'
     }
     if (exclusaoPendente?.tipo === 'talhao') {
+      if (plantiosQuery.isError) {
+        return 'Nao foi possivel verificar quantos plantios serao afetados. Exclua com cautela, ou tente novamente mais tarde.'
+      }
       const n = plantios.filter((p) => p.talhao === exclusaoPendente.talhao.id).length
       return n > 0
         ? `Isso tambem excluira ${n} plantio(s) registrado(s) neste talhao.`
