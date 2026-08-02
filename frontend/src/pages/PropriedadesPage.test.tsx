@@ -86,6 +86,24 @@ describe('PropriedadesPage', () => {
     ).toBeInTheDocument()
   })
 
+  it('trocar de propriedade-alvo de edicao sem salvar reinicializa o formulario com o novo alvo', async () => {
+    vi.mocked(propriedadesApi.listarPropriedades).mockResolvedValue([
+      { id: 1, nome: 'Sitio A' },
+      { id: 2, nome: 'Sitio B' },
+    ])
+    vi.mocked(talhoesApi.listarTalhoes).mockResolvedValue([])
+
+    renderComProvider()
+    await screen.findByText(/Sitio A/)
+
+    const botoesEditar = screen.getAllByText('Editar')
+    await userEvent.click(botoesEditar[0])
+    expect(screen.getByLabelText('Nome')).toHaveValue('Sitio A')
+
+    await userEvent.click(botoesEditar[1])
+    expect(screen.getByLabelText('Nome')).toHaveValue('Sitio B')
+  })
+
   it('excluir talhao com plantios mostra o aviso de cascata com a contagem certa', async () => {
     vi.mocked(propriedadesApi.listarPropriedades).mockResolvedValue([{ id: 1, nome: 'Sitio A' }])
     vi.mocked(talhoesApi.listarTalhoes).mockResolvedValue([
