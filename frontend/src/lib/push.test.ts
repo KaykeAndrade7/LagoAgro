@@ -4,11 +4,17 @@ import * as pushApi from '../api/push'
 
 vi.mock('../api/push')
 
-function definirServiceWorkerMock(resolverSubscribe: () => Promise<{ toJSON: () => unknown }>) {
+function definirServiceWorkerMock(
+  resolverSubscribe: () => Promise<{ toJSON: () => unknown }>,
+  resolverGetSubscription: () => Promise<{ toJSON: () => unknown } | null> = async () => null,
+) {
   Object.defineProperty(navigator, 'serviceWorker', {
     value: {
       ready: Promise.resolve({
-        pushManager: { subscribe: vi.fn(resolverSubscribe) },
+        pushManager: {
+          subscribe: vi.fn(resolverSubscribe),
+          getSubscription: vi.fn(resolverGetSubscription),
+        },
       }),
     },
     configurable: true,
@@ -92,6 +98,28 @@ describe('ativarNotificacoes', () => {
       endpoint: 'https://push.example/1',
       p256dh: 'p256dh-valor',
       auth: 'auth-valor',
+    })
+  })
+
+  it('reaproveita subscription existente em vez de assinar de novo', async () => {
+    vi.stubGlobal('PushManager', class {})
+    vi.stubGlobal('Notification', { requestPermission: vi.fn().mockResolvedValue('granted') })
+    definirServiceWorkerMock(
+      async () => ({ toJSON: () => ({}) }), // subscribe - nao deve ser chamado
+      async () => ({
+        toJSON: () => ({ endpoint: 'https://push.example/existente', keys: { p256dh: 'p', auth: 'a' } }),
+      }),
+    )
+    vi.mocked(pushApi.obterChavePublicaVapid).mockResolvedValue({ public_key: 'QUJD' })
+    vi.mocked(pushApi.registrarPushSubscription).mockResolvedValue({ id: 1 })
+
+    const resultado = await ativarNotificacoes()
+
+    expect(resultado).toBe('ativado')
+    expect(pushApi.registrarPushSubscription).toHaveBeenCalledWith({
+      endpoint: 'https://push.example/existente',
+      p256dh: 'p',
+      auth: 'a',
     })
   })
 })
