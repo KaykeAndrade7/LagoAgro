@@ -83,7 +83,7 @@ export function InsumosPage() {
 
   function mensagemExclusao(): string {
     if (!exclusaoPendente) return ''
-    if (aplicacoesQuery.isError) {
+    if (aplicacoesQuery.isPending || aplicacoesQuery.isError) {
       return 'Nao foi possivel verificar quantas aplicacoes usam este insumo. Exclua com cautela, ou tente novamente mais tarde.'
     }
     const n = aplicacoes.filter((a) => a.insumo === exclusaoPendente.id).length

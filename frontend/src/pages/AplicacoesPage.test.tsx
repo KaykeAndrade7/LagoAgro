@@ -8,6 +8,7 @@ import * as plantiosApi from '../api/plantios'
 import * as talhoesApi from '../api/talhoes'
 import * as culturasApi from '../api/culturas'
 import * as insumosApi from '../api/insumos'
+import { ApiError } from '../lib/api-client'
 
 vi.mock('../api/aplicacoes')
 vi.mock('../api/plantios')
@@ -96,5 +97,26 @@ describe('AplicacoesPage', () => {
     await userEvent.click(screen.getByText('Confirmar'))
 
     expect(screen.queryByText(/Calda bordalesa/)).not.toBeInTheDocument()
+  })
+
+  it('erro 409 simulado do backend aparece como mensagem no dialogo sem fecha-lo', async () => {
+    vi.mocked(aplicacoesApi.listarAplicacoes).mockResolvedValue([
+      { id: 1, plantio: 1, insumo: 1, data: '2026-08-02', quantidade: '2.50' },
+    ])
+    vi.mocked(aplicacoesApi.excluirAplicacao).mockRejectedValue(
+      new ApiError(409, 'Nao e possivel excluir: existem registros vinculados a este item.', {
+        detail: 'Nao e possivel excluir: existem registros vinculados a este item.',
+      }),
+    )
+
+    renderComProvider()
+    await screen.findByText(/Calda bordalesa/)
+    await userEvent.click(screen.getByText('Excluir'))
+    await userEvent.click(screen.getByText('Confirmar'))
+
+    expect(
+      await screen.findByText('Nao e possivel excluir: existem registros vinculados a este item.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 })

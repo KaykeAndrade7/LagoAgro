@@ -18,6 +18,7 @@ export function AplicacoesPage() {
   const [formularioAberto, setFormularioAberto] = useState(false)
   const [erroFormulario, setErroFormulario] = useState<ApiError | null>(null)
   const [exclusaoPendente, setExclusaoPendente] = useState<AplicacaoInsumo | null>(null)
+  const [erroExclusao, setErroExclusao] = useState<string | null>(null)
 
   const aplicacoesQuery = useQuery({ queryKey: ['aplicacoes'], queryFn: listarAplicacoes })
   const plantiosQuery = useQuery({ queryKey: ['plantios'], queryFn: listarPlantios })
@@ -40,7 +41,9 @@ export function AplicacoesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['aplicacoes'] })
       setExclusaoPendente(null)
+      setErroExclusao(null)
     },
+    onError: (erro) => setErroExclusao(paraApiError(erro).message),
   })
 
   if (
@@ -53,7 +56,13 @@ export function AplicacoesPage() {
     return <p>Carregando...</p>
   }
 
-  if (aplicacoesQuery.isError) {
+  if (
+    aplicacoesQuery.isError ||
+    plantiosQuery.isError ||
+    talhoesQuery.isError ||
+    culturasQuery.isError ||
+    insumosQuery.isError
+  ) {
     return (
       <div>
         <p>Nao foi possivel carregar as aplicacoes.</p>
@@ -122,7 +131,13 @@ export function AplicacoesPage() {
               {labelPlantio(aplicacao.plantio)} — {nomeInsumo(aplicacao.insumo)} —{' '}
               {new Date(`${aplicacao.data}T00:00:00`).toLocaleDateString('pt-BR')} — {aplicacao.quantidade}
             </span>
-            <button onClick={() => setExclusaoPendente(aplicacao)} className="text-sm">
+            <button
+              onClick={() => {
+                setErroExclusao(null)
+                setExclusaoPendente(aplicacao)
+              }}
+              className="text-sm"
+            >
               Excluir
             </button>
           </li>
@@ -133,10 +148,14 @@ export function AplicacoesPage() {
         aberto={exclusaoPendente !== null}
         titulo="Excluir aplicação"
         mensagem="Tem certeza que deseja excluir esta aplicação?"
+        erro={erroExclusao ?? undefined}
         onConfirm={() => {
           if (exclusaoPendente) excluirMutation.mutate(exclusaoPendente.id)
         }}
-        onCancel={() => setExclusaoPendente(null)}
+        onCancel={() => {
+          setExclusaoPendente(null)
+          setErroExclusao(null)
+        }}
       />
     </div>
   )
