@@ -189,4 +189,22 @@ describe('navegacao para as paginas de cadastro', () => {
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Tarefas' })).toBeInTheDocument())
   })
+
+  it('link de Colheitas navega para a pagina de colheitas', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access: 'token-1' }), { status: 200 })) // refresh
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 1, username: 'produtor1' }), { status: 200 })) // me
+      // ColheitasPage dispara 4 fetches paralelos (colheitas/plantios/talhoes/culturas).
+      .mockImplementation(async () => new Response(JSON.stringify([]), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const user = userEvent.setup()
+
+    render(<App />)
+    await waitFor(() => expect(screen.getByText(/Bem-vindo, produtor1/)).toBeInTheDocument())
+
+    await user.click(screen.getByRole('link', { name: 'Colheitas' }))
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Colheitas' })).toBeInTheDocument())
+  })
 })
