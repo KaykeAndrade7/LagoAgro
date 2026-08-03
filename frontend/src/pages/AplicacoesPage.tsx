@@ -6,6 +6,7 @@ import { listarTalhoes } from '../api/talhoes'
 import { listarCulturas } from '../api/culturas'
 import { listarInsumos } from '../api/insumos'
 import { ApiError, paraApiError } from '../lib/api-client'
+import { labelPlantio } from '../lib/plantio-labels'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { AplicacaoInsumoForm } from '../components/AplicacaoInsumoForm'
 
@@ -73,23 +74,14 @@ export function AplicacoesPage() {
   const culturas = culturasQuery.data ?? []
   const insumos = insumosQuery.data ?? []
 
-  function nomeTalhao(id: number): string {
-    return talhoes.find((t) => t.id === id)?.nome ?? '—'
-  }
-  function nomeCultura(id: number): string {
-    return culturas.find((c) => c.id === id)?.nome ?? '—'
-  }
-  function labelPlantio(plantioId: number): string {
-    const plantio = plantios.find((p) => p.id === plantioId)
-    if (!plantio) return '—'
-    const dataFormatada = new Date(`${plantio.data_plantio}T00:00:00`).toLocaleDateString('pt-BR')
-    return `${nomeCultura(plantio.cultura)} — ${nomeTalhao(plantio.talhao)} — ${dataFormatada}`
-  }
   function nomeInsumo(id: number): string {
     return insumos.find((i) => i.id === id)?.nome ?? '—'
   }
 
-  const plantioOpcoes = plantios.map((plantio) => ({ id: plantio.id, label: labelPlantio(plantio.id) }))
+  const plantioOpcoes = plantios.map((plantio) => ({
+    id: plantio.id,
+    label: labelPlantio(plantios, talhoes, culturas, plantio.id),
+  }))
   const aplicacoesOrdenadas = [...aplicacoes].sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0))
 
   return (
@@ -124,7 +116,7 @@ export function AplicacoesPage() {
         {aplicacoesOrdenadas.map((aplicacao) => (
           <li key={aplicacao.id} className="mb-2 flex items-center justify-between border p-2">
             <span>
-              {labelPlantio(aplicacao.plantio)} — {nomeInsumo(aplicacao.insumo)} —{' '}
+              {labelPlantio(plantios, talhoes, culturas, aplicacao.plantio)} — {nomeInsumo(aplicacao.insumo)} —{' '}
               {new Date(`${aplicacao.data}T00:00:00`).toLocaleDateString('pt-BR')} — {aplicacao.quantidade}
             </span>
             <button

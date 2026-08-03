@@ -13,6 +13,7 @@ import { listarPlantios } from '../api/plantios'
 import { listarTalhoes } from '../api/talhoes'
 import { listarCulturas } from '../api/culturas'
 import { ApiError, paraApiError } from '../lib/api-client'
+import { labelPlantio } from '../lib/plantio-labels'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ColheitaForm } from '../components/ColheitaForm'
 
@@ -92,20 +93,10 @@ export function ColheitasPage() {
   const talhoes = talhoesQuery.data ?? []
   const culturas = culturasQuery.data ?? []
 
-  function nomeTalhao(id: number): string {
-    return talhoes.find((t) => t.id === id)?.nome ?? '—'
-  }
-  function nomeCultura(id: number): string {
-    return culturas.find((c) => c.id === id)?.nome ?? '—'
-  }
-  function labelPlantio(plantioId: number): string {
-    const plantio = plantios.find((p) => p.id === plantioId)
-    if (!plantio) return '—'
-    const dataFormatada = new Date(`${plantio.data_plantio}T00:00:00`).toLocaleDateString('pt-BR')
-    return `${nomeCultura(plantio.cultura)} — ${nomeTalhao(plantio.talhao)} — ${dataFormatada}`
-  }
-
-  const plantioOpcoes = plantios.map((plantio) => ({ id: plantio.id, label: labelPlantio(plantio.id) }))
+  const plantioOpcoes = plantios.map((plantio) => ({
+    id: plantio.id,
+    label: labelPlantio(plantios, talhoes, culturas, plantio.id),
+  }))
   const colheitasOrdenadas = [...colheitas].sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0))
 
   return (
@@ -144,7 +135,7 @@ export function ColheitasPage() {
           ) : (
             <li key={colheita.id} className="mb-2 flex items-center justify-between border p-2">
               <span>
-                {labelPlantio(colheita.plantio)} —{' '}
+                {labelPlantio(plantios, talhoes, culturas, colheita.plantio)} —{' '}
                 {new Date(`${colheita.data}T00:00:00`).toLocaleDateString('pt-BR')} —{' '}
                 {ROTULOS_CLASSIFICACAO[colheita.classificacao]} — {colheita.quantidade} caixas
               </span>
