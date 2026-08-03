@@ -23,7 +23,7 @@ from crops.views import CulturaViewSet
 from finance.views import DiariaViewSet, LancamentoFinanceiroViewSet, TrabalhadorViewSet
 from harvest.views import ColheitaViewSet
 from inputs.views import AplicacaoInsumoViewSet, InsumoViewSet
-from notifications.views import DispararNotificacoesView, PushSubscriptionViewSet
+from notifications.views import DispararNotificacoesView, PushSubscriptionViewSet, VapidPublicKeyView
 from plantings.views import PlantioViewSet
 from properties.views import PropriedadeViewSet, TalhaoViewSet
 from tasks.views import TarefaViewSet
@@ -49,5 +49,6 @@ urlpatterns = [
     path('api/auth/logout/', LogoutView.as_view(), name='auth-logout'),
     path('api/auth/me/', MeView.as_view(), name='auth-me'),
     path('api/notificacoes/disparar/', DispararNotificacoesView.as_view(), name='notificacoes-disparar'),
+    path('api/notificacoes/chave-publica/', VapidPublicKeyView.as_view(), name='notificacoes-chave-publica'),
     path('api/', include(router.urls)),
 ]

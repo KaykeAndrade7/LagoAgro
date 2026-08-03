@@ -67,3 +67,14 @@ class DispararNotificacoesView(APIView):
 
         resultado = enviar_notificacoes_do_dia()
         return Response(resultado)
+
+
+class VapidPublicKeyView(APIView):
+    """Expoe a metade publica do par de chaves VAPID (ADR 005) - nao e
+    segredo por definicao, entao nao exige autenticacao."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return Response({"public_key": settings.VAPID_PUBLIC_KEY})
