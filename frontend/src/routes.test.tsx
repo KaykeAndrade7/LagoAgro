@@ -130,4 +130,42 @@ describe('navegacao para as paginas de cadastro', () => {
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Plantios' })).toBeInTheDocument())
   })
+
+  it('link de Insumos navega para a pagina de insumos', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access: 'token-1' }), { status: 200 })) // refresh
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 1, username: 'produtor1' }), { status: 200 })) // me
+      // InsumosPage dispara 2 fetches paralelos (insumos/aplicacoes); mesmo motivo dos
+      // testes de Propriedades/Plantios acima: mockImplementation evita reusar a mesma
+      // instancia de Response entre chamadas concorrentes.
+      .mockImplementation(async () => new Response(JSON.stringify([]), { status: 200 })) // insumos/aplicacoes
+    vi.stubGlobal('fetch', fetchMock)
+    const user = userEvent.setup()
+
+    render(<App />)
+    await waitFor(() => expect(screen.getByText(/Bem-vindo, produtor1/)).toBeInTheDocument())
+
+    await user.click(screen.getByRole('link', { name: 'Insumos' }))
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Insumos' })).toBeInTheDocument())
+  })
+
+  it('link de Aplicacoes navega para a pagina de aplicacoes', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access: 'token-1' }), { status: 200 })) // refresh
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 1, username: 'produtor1' }), { status: 200 })) // me
+      // AplicacoesPage dispara 5 fetches paralelos (aplicacoes/plantios/talhoes/culturas/insumos).
+      .mockImplementation(async () => new Response(JSON.stringify([]), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const user = userEvent.setup()
+
+    render(<App />)
+    await waitFor(() => expect(screen.getByText(/Bem-vindo, produtor1/)).toBeInTheDocument())
+
+    await user.click(screen.getByRole('link', { name: 'Aplicações' }))
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Aplicações' })).toBeInTheDocument())
+  })
 })

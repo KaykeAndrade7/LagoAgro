@@ -6,6 +6,8 @@ import { DashboardPage } from './pages/DashboardPage'
 import { PropriedadesPage } from './pages/PropriedadesPage'
 import { CulturasPage } from './pages/CulturasPage'
 import { PlantiosPage } from './pages/PlantiosPage'
+import { InsumosPage } from './pages/InsumosPage'
+import { AplicacoesPage } from './pages/AplicacoesPage'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -45,6 +47,26 @@ export const router = createBrowserRouter([
       <ProtectedRoute>
         <AppShell>
           <PlantiosPage />
+        </AppShell>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/insumos',
+    element: (
+      <ProtectedRoute>
+        <AppShell>
+          <InsumosPage />
+        </AppShell>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/aplicacoes',
+    element: (
+      <ProtectedRoute>
+        <AppShell>
+          <AplicacoesPage />
         </AppShell>
       </ProtectedRoute>
     ),
