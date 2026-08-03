@@ -1,9 +1,24 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { suportaPush, ativarNotificacoes } from '../lib/push'
+
+type EstadoNotificacoes = 'idle' | 'carregando' | 'ativado' | 'negado' | 'indisponivel' | 'erro'
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { logout } = useAuth()
+  const [estadoNotificacoes, setEstadoNotificacoes] = useState<EstadoNotificacoes>('idle')
+
+  async function aoClicarAtivarNotificacoes() {
+    setEstadoNotificacoes('carregando')
+    try {
+      const resultado = await ativarNotificacoes()
+      setEstadoNotificacoes(resultado)
+    } catch {
+      setEstadoNotificacoes('erro')
+    }
+  }
 
   return (
     <div>
@@ -20,9 +35,24 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link to="/tarefas">Tarefas</Link>
           </nav>
         </div>
-        <button onClick={() => logout()} className="text-sm">
-          Sair
-        </button>
+        <div className="flex items-center gap-3 text-sm">
+          {suportaPush() && estadoNotificacoes !== 'ativado' && (
+            <button onClick={aoClicarAtivarNotificacoes} disabled={estadoNotificacoes === 'carregando'}>
+              {estadoNotificacoes === 'carregando' ? 'Ativando...' : 'Ativar notificações'}
+            </button>
+          )}
+          {estadoNotificacoes === 'ativado' && <span>Notificações ativadas</span>}
+          {estadoNotificacoes === 'negado' && (
+            <span className="text-red-600">Permissão negada — ative nas configurações do navegador.</span>
+          )}
+          {estadoNotificacoes === 'indisponivel' && (
+            <span className="text-red-600">Notificações indisponíveis neste ambiente.</span>
+          )}
+          {estadoNotificacoes === 'erro' && (
+            <span className="text-red-600">Não foi possível ativar notificações agora.</span>
+          )}
+          <button onClick={() => logout()}>Sair</button>
+        </div>
       </header>
       <main className="p-4">{children}</main>
     </div>
