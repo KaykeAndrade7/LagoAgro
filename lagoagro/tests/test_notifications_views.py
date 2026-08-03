@@ -104,3 +104,31 @@ def test_put_subscription_retorna_405(criar_usuario_autenticado):
     })
 
     assert response.status_code == 405
+
+
+def test_chave_publica_retorna_a_chave_configurada(settings):
+    settings.VAPID_PUBLIC_KEY = "chave-publica-de-teste"
+    client = APIClient()
+
+    response = client.get("/api/notificacoes/chave-publica/")
+
+    assert response.status_code == 200
+    assert response.data["public_key"] == "chave-publica-de-teste"
+
+
+def test_chave_publica_retorna_vazio_quando_nao_configurada(settings):
+    settings.VAPID_PUBLIC_KEY = ""
+    client = APIClient()
+
+    response = client.get("/api/notificacoes/chave-publica/")
+
+    assert response.status_code == 200
+    assert response.data["public_key"] == ""
+
+
+def test_chave_publica_nao_exige_autenticacao():
+    client = APIClient()
+
+    response = client.get("/api/notificacoes/chave-publica/")
+
+    assert response.status_code == 200
