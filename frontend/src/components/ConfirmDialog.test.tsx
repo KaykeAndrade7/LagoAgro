@@ -46,4 +46,27 @@ describe('ConfirmDialog', () => {
     expect(onCancel).toHaveBeenCalledTimes(1)
     expect(onConfirm).not.toHaveBeenCalled()
   })
+
+  it('nao mostra area de erro quando erro nao e fornecido', () => {
+    render(<ConfirmDialog aberto={true} titulo="t" mensagem="m" onConfirm={vi.fn()} onCancel={vi.fn()} />)
+
+    expect(screen.queryByText(/Nao e possivel/)).not.toBeInTheDocument()
+  })
+
+  it('mostra mensagem de erro quando erro e fornecido', () => {
+    render(
+      <ConfirmDialog
+        aberto={true}
+        titulo="t"
+        mensagem="m"
+        erro="Nao e possivel excluir: existem registros vinculados a este item."
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    expect(
+      screen.getByText('Nao e possivel excluir: existem registros vinculados a este item.'),
+    ).toBeInTheDocument()
+  })
 })
