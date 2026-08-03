@@ -53,7 +53,7 @@ export function AplicacaoInsumoForm({
 
   useEffect(() => {
     if (!erro) return
-    const body = erro.body as Record<string, unknown> | undefined
+    const body = erro.body as Record<string, unknown> | null | undefined
     let algumCampoMapeado = false
     for (const campo of CAMPOS_CONHECIDOS) {
       const mensagens = body?.[campo]

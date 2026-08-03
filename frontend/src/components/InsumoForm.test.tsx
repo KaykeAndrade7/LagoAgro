@@ -68,6 +68,13 @@ describe('InsumoForm', () => {
     expect(await screen.findByText('Ja existe um insumo com esse nome.')).toBeInTheDocument()
   })
 
+  it('mapeia erro de campo tipo do backend para o campo correspondente', async () => {
+    const erro = new ApiError(400, 'Erro de validacao', { tipo: ['Tipo invalido.'] })
+    render(<InsumoForm erro={erro} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+
+    expect(await screen.findByText('Tipo invalido.')).toBeInTheDocument()
+  })
+
   it('mostra mensagem geral quando erro do backend nao bate com nenhum campo', async () => {
     const erro = new ApiError(500, 'Erro interno do servidor.', {})
     render(<InsumoForm erro={erro} onSubmit={vi.fn()} onCancel={vi.fn()} />)

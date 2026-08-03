@@ -45,7 +45,7 @@ export function InsumoForm({ insumo, erro, onSubmit, onCancel }: InsumoFormProps
 
   useEffect(() => {
     if (!erro) return
-    const body = erro.body as Record<string, unknown> | undefined
+    const body = erro.body as Record<string, unknown> | null | undefined
     let algumCampoMapeado = false
     for (const campo of CAMPOS_CONHECIDOS) {
       const mensagens = body?.[campo]
@@ -82,6 +82,7 @@ export function InsumoForm({ insumo, erro, onSubmit, onCancel }: InsumoFormProps
           <option value="veneno">Veneno</option>
           <option value="adubo">Adubo</option>
         </select>
+        {errors.tipo && <p className="text-sm text-red-600">{errors.tipo.message}</p>}
       </div>
       <div>
         <label htmlFor="insumo-carencia" className="block text-sm">
