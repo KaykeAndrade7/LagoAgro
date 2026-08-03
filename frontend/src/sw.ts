@@ -6,9 +6,23 @@ declare const self: ServiceWorkerGlobalScope
 
 precacheAndRoute(self.__WB_MANIFEST)
 
-// Handlers de 'push' e 'notificationclick' (ADR 005) sao adicionados numa
-// fatia futura, quando a UI de tarefas existir pra mostrar o que a
-// notificacao abre - ver docs/superpowers/specs/2026-08-01-frontend-scaffold-auth-design.md.
+self.addEventListener('push', (event) => {
+  const dados = event.data?.json() ?? {}
+  const title = dados.title ?? 'LagoAgro'
+  event.waitUntil(self.registration.showNotification(title, { body: dados.body ?? '' }))
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window' }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) return client.focus()
+      }
+      return self.clients.openWindow('/')
+    }),
+  )
+})
 
 // Navegacao offline (fallback pra index.html em rotas desconhecidas) nao e
 // implementada aqui de proposito - RNF02 (docs/requirements.md) diz que o
