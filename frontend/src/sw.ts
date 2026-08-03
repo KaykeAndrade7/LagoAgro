@@ -7,7 +7,12 @@ declare const self: ServiceWorkerGlobalScope
 precacheAndRoute(self.__WB_MANIFEST)
 
 self.addEventListener('push', (event) => {
-  const dados = event.data?.json() ?? {}
+  let dados: { title?: string; body?: string } = {}
+  try {
+    dados = event.data?.json() ?? {}
+  } catch {
+    dados = {}
+  }
   const title = dados.title ?? 'LagoAgro'
   event.waitUntil(self.registration.showNotification(title, { body: dados.body ?? '' }))
 })
@@ -15,7 +20,7 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   event.waitUntil(
-    self.clients.matchAll({ type: 'window' }).then((clientList) => {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
         if ('focus' in client) return client.focus()
       }

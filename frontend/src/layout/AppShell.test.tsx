@@ -71,4 +71,15 @@ describe('AppShell', () => {
 
     expect(await screen.findByText('Notificações indisponíveis neste ambiente.')).toBeInTheDocument()
   })
+
+  it('erro inesperado mostra mensagem de erro e mantem o botao', async () => {
+    vi.mocked(pushLib.suportaPush).mockReturnValue(true)
+    vi.mocked(pushLib.ativarNotificacoes).mockRejectedValue(new Error('rede'))
+
+    renderComProviders()
+    await userEvent.click(screen.getByText('Ativar notificações'))
+
+    expect(await screen.findByText('Não foi possível ativar notificações agora.')).toBeInTheDocument()
+    expect(screen.getByText('Ativar notificações')).toBeInTheDocument()
+  })
 })
