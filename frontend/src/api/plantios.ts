@@ -38,3 +38,7 @@ export function atualizarPlantio(id: number, input: PlantioInput): Promise<Plant
 export function excluirPlantio(id: number): Promise<void> {
   return apiRequest<void>(`/plantios/${id}/`, { method: 'DELETE' })
 }
+
+export function obterDataSeguraColheita(plantioId: number): Promise<{ data_segura: string | null }> {
+  return apiRequest<{ data_segura: string | null }>(`/plantios/${plantioId}/data-segura-colheita/`)
+}
