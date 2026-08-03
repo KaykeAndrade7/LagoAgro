@@ -35,6 +35,8 @@ describe('roteamento', () => {
           status: 200,
         }),
       ) // login
+      // DashboardPage dispara 3 fetches paralelos (tarefas/plantios/talhoes).
+      .mockImplementation(async () => new Response(JSON.stringify([]), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
     const user = userEvent.setup()
 
@@ -53,7 +55,8 @@ describe('roteamento', () => {
       .fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ access: 'token-1' }), { status: 200 })) // refresh
       .mockResolvedValueOnce(new Response(JSON.stringify({ id: 1, username: 'produtor1' }), { status: 200 })) // me
-      .mockResolvedValueOnce(new Response(null, { status: 200 })) // logout
+      // DashboardPage dispara 3 fetches paralelos (tarefas/plantios/talhoes) antes do logout.
+      .mockImplementation(async () => new Response(JSON.stringify([]), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
     const user = userEvent.setup()
 
@@ -167,5 +170,23 @@ describe('navegacao para as paginas de cadastro', () => {
     await user.click(screen.getByRole('link', { name: 'Aplicações' }))
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Aplicações' })).toBeInTheDocument())
+  })
+
+  it('link de Tarefas navega para a pagina de tarefas', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access: 'token-1' }), { status: 200 })) // refresh
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 1, username: 'produtor1' }), { status: 200 })) // me
+      // TarefasPage dispara 4 fetches paralelos (tarefas/plantios/talhoes/culturas).
+      .mockImplementation(async () => new Response(JSON.stringify([]), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const user = userEvent.setup()
+
+    render(<App />)
+    await waitFor(() => expect(screen.getByText(/Bem-vindo, produtor1/)).toBeInTheDocument())
+
+    await user.click(screen.getByRole('link', { name: 'Tarefas' }))
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Tarefas' })).toBeInTheDocument())
   })
 })

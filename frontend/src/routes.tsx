@@ -8,6 +8,7 @@ import { CulturasPage } from './pages/CulturasPage'
 import { PlantiosPage } from './pages/PlantiosPage'
 import { InsumosPage } from './pages/InsumosPage'
 import { AplicacoesPage } from './pages/AplicacoesPage'
+import { TarefasPage } from './pages/TarefasPage'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -67,6 +68,16 @@ export const router = createBrowserRouter([
       <ProtectedRoute>
         <AppShell>
           <AplicacoesPage />
+        </AppShell>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/tarefas',
+    element: (
+      <ProtectedRoute>
+        <AppShell>
+          <TarefasPage />
         </AppShell>
       </ProtectedRoute>
     ),
