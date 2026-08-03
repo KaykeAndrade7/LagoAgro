@@ -176,4 +176,30 @@ describe('TarefasPage', () => {
 
     expect((await screen.findByText(/Atrasada/)).className).toContain('text-red-600')
   })
+
+  it('editar uma tarefa concluida nao afeta seu estado de conclusao', async () => {
+    vi.mocked(tarefasApi.listarTarefas).mockResolvedValue([
+      { id: 1, plantio: 1, descricao: 'Antiga', data: '2026-08-01', concluida: true },
+    ])
+    vi.mocked(tarefasApi.atualizarTarefa).mockResolvedValue({
+      id: 1,
+      plantio: 1,
+      descricao: 'Nova',
+      data: '2026-08-01',
+      concluida: true,
+    })
+
+    renderComProvider()
+    await userEvent.click(await screen.findByText('Ver concluídas'))
+    await screen.findByText(/Antiga/)
+    await userEvent.click(screen.getByText('Editar'))
+    await userEvent.clear(screen.getByLabelText('Descrição'))
+    await userEvent.type(screen.getByLabelText('Descrição'), 'Nova')
+    await userEvent.click(screen.getByText('Salvar'))
+
+    expect(vi.mocked(tarefasApi.atualizarTarefa)).toHaveBeenCalledWith(
+      1,
+      expect.not.objectContaining({ concluida: expect.anything() }),
+    )
+  })
 })

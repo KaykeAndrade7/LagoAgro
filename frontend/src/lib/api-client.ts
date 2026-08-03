@@ -14,6 +14,10 @@ export class ApiError extends Error {
   }
 }
 
+export function paraApiError(erro: unknown): ApiError {
+  return erro instanceof ApiError ? erro : new ApiError(0, 'Erro inesperado.')
+}
+
 export class AuthExpiredError extends Error {}
 
 type ApiRequestOptions = {

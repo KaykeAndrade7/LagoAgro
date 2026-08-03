@@ -4,22 +4,9 @@ import { useAuth } from '../auth/AuthContext'
 import { listarTarefas, alterarConclusao, type Tarefa } from '../api/tarefas'
 import { listarPlantios } from '../api/plantios'
 import { listarTalhoes } from '../api/talhoes'
-import { ApiError } from '../lib/api-client'
+import { paraApiError } from '../lib/api-client'
+import { hojeISO, estaAtrasada } from '../lib/datas'
 import { TarefaItem } from '../components/TarefaItem'
-
-function paraApiError(erro: unknown): ApiError {
-  return erro instanceof ApiError ? erro : new ApiError(0, 'Erro inesperado.')
-}
-
-// Mesmo cuidado de TarefasPage.tsx: monta "hoje" a partir dos componentes locais
-// da data, nao de new Date().toISOString() (que e UTC).
-function hojeISO(): string {
-  const agora = new Date()
-  const ano = agora.getFullYear()
-  const mes = String(agora.getMonth() + 1).padStart(2, '0')
-  const dia = String(agora.getDate()).padStart(2, '0')
-  return `${ano}-${mes}-${dia}`
-}
 
 export function DashboardPage() {
   const { usuario } = useAuth()
@@ -47,7 +34,15 @@ export function DashboardPage() {
     return (
       <div>
         <p>Nao foi possivel carregar o painel.</p>
-        <button onClick={() => tarefasQuery.refetch()}>Tentar novamente</button>
+        <button
+          onClick={() => {
+            tarefasQuery.refetch()
+            plantiosQuery.refetch()
+            talhoesQuery.refetch()
+          }}
+        >
+          Tentar novamente
+        </button>
       </div>
     )
   }
@@ -93,7 +88,7 @@ export function DashboardPage() {
                 <li key={tarefa.id} className="mb-1">
                   <TarefaItem
                     tarefa={tarefa}
-                    atrasada={tarefa.data < hoje}
+                    atrasada={estaAtrasada(tarefa, hoje)}
                     onToggleConcluida={(concluida) => {
                       setErroConclusao(null)
                       concluirMutation.mutate({ id: tarefa.id, concluida })

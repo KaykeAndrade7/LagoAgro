@@ -12,27 +12,13 @@ import {
 import { listarPlantios } from '../api/plantios'
 import { listarTalhoes } from '../api/talhoes'
 import { listarCulturas } from '../api/culturas'
-import { ApiError } from '../lib/api-client'
+import { ApiError, paraApiError } from '../lib/api-client'
+import { hojeISO, estaAtrasada } from '../lib/datas'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { TarefaForm } from '../components/TarefaForm'
 import { TarefaItem } from '../components/TarefaItem'
 
 type FormularioAberto = { tipo: 'novo' } | { tipo: 'editar'; tarefa: Tarefa } | null
-
-function paraApiError(erro: unknown): ApiError {
-  return erro instanceof ApiError ? erro : new ApiError(0, 'Erro inesperado.')
-}
-
-// new Date().toISOString() usa UTC e pode adiantar/atrasar um dia perto da meia-noite
-// dependendo do fuso local — usamos os componentes locais da data pra montar o
-// "hoje" que compara com o campo `data` (YYYY-MM-DD) das tarefas.
-function hojeISO(): string {
-  const agora = new Date()
-  const ano = agora.getFullYear()
-  const mes = String(agora.getMonth() + 1).padStart(2, '0')
-  const dia = String(agora.getDate()).padStart(2, '0')
-  return `${ano}-${mes}-${dia}`
-}
 
 export function TarefasPage() {
   const queryClient = useQueryClient()
@@ -100,7 +86,16 @@ export function TarefasPage() {
     return (
       <div>
         <p>Nao foi possivel carregar as tarefas.</p>
-        <button onClick={() => tarefasQuery.refetch()}>Tentar novamente</button>
+        <button
+          onClick={() => {
+            tarefasQuery.refetch()
+            plantiosQuery.refetch()
+            talhoesQuery.refetch()
+            culturasQuery.refetch()
+          }}
+        >
+          Tentar novamente
+        </button>
       </div>
     )
   }
@@ -173,7 +168,7 @@ export function TarefasPage() {
               <TarefaItem
                 tarefa={tarefa}
                 rotulo={labelPlantio(tarefa.plantio)}
-                atrasada={!tarefa.concluida && tarefa.data < hoje}
+                atrasada={estaAtrasada(tarefa, hoje)}
                 onToggleConcluida={(concluida) => {
                   setErroConclusao(null)
                   concluirMutation.mutate({ id: tarefa.id, concluida })
