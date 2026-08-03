@@ -77,6 +77,33 @@ describe('ColheitaForm', () => {
     ).toBeInTheDocument()
   })
 
+  it('mostra mensagem de erro quando a busca de data segura falha', async () => {
+    vi.mocked(plantiosApi.obterDataSeguraColheita).mockRejectedValue(new Error('erro de rede'))
+    renderComProvider(<ColheitaForm plantioOpcoes={plantioOpcoes} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+
+    await userEvent.selectOptions(screen.getByLabelText('Plantio'), '1')
+
+    expect(await screen.findByText('Não foi possível verificar a carência.')).toBeInTheDocument()
+  })
+
+  it('nao bloqueia o submit mesmo quando a busca de data segura falha', async () => {
+    vi.mocked(plantiosApi.obterDataSeguraColheita).mockRejectedValue(new Error('erro de rede'))
+    const onSubmit = vi.fn()
+    renderComProvider(<ColheitaForm plantioOpcoes={plantioOpcoes} onSubmit={onSubmit} onCancel={vi.fn()} />)
+
+    await userEvent.selectOptions(screen.getByLabelText('Plantio'), '1')
+    await userEvent.type(screen.getByLabelText('Data'), '2026-08-05')
+    await userEvent.type(screen.getByLabelText('Quantidade (caixas)'), '10')
+    await userEvent.click(screen.getByText('Salvar'))
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      plantio: 1,
+      data: '2026-08-05',
+      classificacao: 'primeira',
+      quantidade: '10',
+    })
+  })
+
   it('pre-popula os campos quando editando uma colheita existente', () => {
     const colheita = { id: 1, plantio: 1, data: '2026-08-05', classificacao: 'primeira' as const, quantidade: '5.00' }
     renderComProvider(

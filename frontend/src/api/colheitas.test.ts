@@ -38,11 +38,14 @@ describe('api/colheitas', () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(colheita), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    await atualizarColheita(1, { plantio: 1, data: '2026-08-05', classificacao: 'segunda', quantidade: '5.00' })
+    const input = { plantio: 1, data: '2026-08-05', classificacao: 'segunda' as const, quantidade: '5.00' }
+    const result = await atualizarColheita(1, input)
 
     const [url, options] = fetchMock.mock.calls[0]
     expect(url).toBe('/api/colheitas/1/')
     expect(options.method).toBe('PATCH')
+    expect(options.body).toBe(JSON.stringify(input))
+    expect(result).toEqual(colheita)
   })
 
   it('excluirColheita faz DELETE /api/colheitas/:id/', async () => {
