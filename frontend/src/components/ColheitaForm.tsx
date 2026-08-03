@@ -66,7 +66,9 @@ export function ColheitaForm({ plantioOpcoes, colheita, erro, onSubmit, onCancel
   })
 
   function mensagemDataSegura(): string | null {
-    if (!(plantioSelecionado > 0) || !dataSeguraQuery.isSuccess) return null
+    if (!(plantioSelecionado > 0)) return null
+    if (dataSeguraQuery.isError) return 'Não foi possível verificar a carência.'
+    if (!dataSeguraQuery.isSuccess) return null
     const { data_segura } = dataSeguraQuery.data
     if (!data_segura) return 'Nenhuma restrição de carência para este plantio.'
     return `Data segura para colher: ${new Date(`${data_segura}T00:00:00`).toLocaleDateString('pt-BR')}`
@@ -110,6 +112,7 @@ export function ColheitaForm({ plantioOpcoes, colheita, erro, onSubmit, onCancel
             </option>
           ))}
         </select>
+        {errors.classificacao && <p className="text-sm text-red-600">{errors.classificacao.message}</p>}
       </div>
       <div>
         <label htmlFor="colheita-quantidade" className="block text-sm">
