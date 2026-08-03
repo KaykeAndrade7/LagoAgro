@@ -10,15 +10,11 @@ import {
   type InsumoInput,
 } from '../api/insumos'
 import { listarAplicacoes } from '../api/aplicacoes'
-import { ApiError } from '../lib/api-client'
+import { ApiError, paraApiError } from '../lib/api-client'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { InsumoForm } from '../components/InsumoForm'
 
 type FormularioAberto = { tipo: 'novo' } | { tipo: 'editar'; insumo: Insumo } | null
-
-function paraApiError(erro: unknown): ApiError {
-  return erro instanceof ApiError ? erro : new ApiError(0, 'Erro inesperado.')
-}
 
 export function InsumosPage() {
   const queryClient = useQueryClient()

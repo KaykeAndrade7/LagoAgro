@@ -5,13 +5,9 @@ import { listarPlantios } from '../api/plantios'
 import { listarTalhoes } from '../api/talhoes'
 import { listarCulturas } from '../api/culturas'
 import { listarInsumos } from '../api/insumos'
-import { ApiError } from '../lib/api-client'
+import { ApiError, paraApiError } from '../lib/api-client'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { AplicacaoInsumoForm } from '../components/AplicacaoInsumoForm'
-
-function paraApiError(erro: unknown): ApiError {
-  return erro instanceof ApiError ? erro : new ApiError(0, 'Erro inesperado.')
-}
 
 export function AplicacoesPage() {
   const queryClient = useQueryClient()
