@@ -1,10 +1,10 @@
-import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import type { Insumo } from '../api/insumos'
 import type { AplicacaoInsumoInput } from '../api/aplicacoes'
 import type { ApiError } from '../lib/api-client'
+import { useMapeamentoErroFormulario } from '../lib/mutation-errors'
 
 export type PlantioOpcao = { id: number; label: string }
 
@@ -51,22 +51,7 @@ export function AplicacaoInsumoForm({
     defaultValues: { plantio: 0, insumo: 0, data: '', quantidade: '' },
   })
 
-  useEffect(() => {
-    if (!erro) return
-    const body = erro.body as Record<string, unknown> | null | undefined
-    let algumCampoMapeado = false
-    for (const campo of CAMPOS_CONHECIDOS) {
-      const mensagens = body?.[campo]
-      if (Array.isArray(mensagens) && typeof mensagens[0] === 'string') {
-        setError(campo, { message: mensagens[0] })
-        algumCampoMapeado = true
-      }
-    }
-    if (!algumCampoMapeado) {
-      const detail = typeof body?.detail === 'string' ? body.detail : erro.message
-      setError('root', { message: detail })
-    }
-  }, [erro, setError])
+  useMapeamentoErroFormulario(erro, setError, CAMPOS_CONHECIDOS)
 
   return (
     <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-2">
