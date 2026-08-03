@@ -14,6 +14,7 @@ import { listarTalhoes } from '../api/talhoes'
 import { listarCulturas } from '../api/culturas'
 import { ApiError, paraApiError } from '../lib/api-client'
 import { hojeISO, estaAtrasada } from '../lib/datas'
+import { labelPlantio } from '../lib/plantio-labels'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { TarefaForm } from '../components/TarefaForm'
 import { TarefaItem } from '../components/TarefaItem'
@@ -105,20 +106,10 @@ export function TarefasPage() {
   const talhoes = talhoesQuery.data ?? []
   const culturas = culturasQuery.data ?? []
 
-  function nomeTalhao(id: number): string {
-    return talhoes.find((t) => t.id === id)?.nome ?? '—'
-  }
-  function nomeCultura(id: number): string {
-    return culturas.find((c) => c.id === id)?.nome ?? '—'
-  }
-  function labelPlantio(plantioId: number): string {
-    const plantio = plantios.find((p) => p.id === plantioId)
-    if (!plantio) return '—'
-    const dataFormatada = new Date(`${plantio.data_plantio}T00:00:00`).toLocaleDateString('pt-BR')
-    return `${nomeCultura(plantio.cultura)} — ${nomeTalhao(plantio.talhao)} — ${dataFormatada}`
-  }
-
-  const plantioOpcoes = plantios.map((plantio) => ({ id: plantio.id, label: labelPlantio(plantio.id) }))
+  const plantioOpcoes = plantios.map((plantio) => ({
+    id: plantio.id,
+    label: labelPlantio(plantios, talhoes, culturas, plantio.id),
+  }))
   const hoje = hojeISO()
   const tarefasVisiveis = (mostrarConcluidas ? tarefas : tarefas.filter((t) => !t.concluida))
     .slice()
@@ -167,7 +158,7 @@ export function TarefasPage() {
             <li key={tarefa.id} className="mb-2 flex items-center justify-between border p-2">
               <TarefaItem
                 tarefa={tarefa}
-                rotulo={labelPlantio(tarefa.plantio)}
+                rotulo={labelPlantio(plantios, talhoes, culturas, tarefa.plantio)}
                 atrasada={estaAtrasada(tarefa, hoje)}
                 onToggleConcluida={(concluida) => {
                   setErroConclusao(null)
