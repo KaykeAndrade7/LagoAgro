@@ -15,6 +15,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link to="/propriedades">Propriedades</Link>
             <Link to="/culturas">Culturas</Link>
             <Link to="/plantios">Plantios</Link>
+            <Link to="/insumos">Insumos</Link>
+            <Link to="/aplicacoes">Aplicações</Link>
           </nav>
         </div>
         <button onClick={() => logout()} className="text-sm">
