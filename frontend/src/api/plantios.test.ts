@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { listarPlantios, criarPlantio, atualizarPlantio, excluirPlantio } from './plantios'
+import { listarPlantios, criarPlantio, atualizarPlantio, excluirPlantio, obterDataSeguraColheita } from './plantios'
 
 describe('api/plantios', () => {
   beforeEach(() => {
@@ -54,5 +54,17 @@ describe('api/plantios', () => {
     const [url, options] = fetchMock.mock.calls[0]
     expect(url).toBe('/api/plantios/1/')
     expect(options.method).toBe('DELETE')
+  })
+
+  it('obterDataSeguraColheita faz GET /api/plantios/:id/data-segura-colheita/', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ data_segura: '2026-08-10' }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await obterDataSeguraColheita(1)
+
+    const [url, options] = fetchMock.mock.calls[0]
+    expect(url).toBe('/api/plantios/1/data-segura-colheita/')
+    expect(options.method).toBe('GET')
+    expect(result).toEqual({ data_segura: '2026-08-10' })
   })
 })
