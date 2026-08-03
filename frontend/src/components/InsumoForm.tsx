@@ -1,9 +1,9 @@
-import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import type { Insumo, InsumoInput } from '../api/insumos'
 import type { ApiError } from '../lib/api-client'
+import { useMapeamentoErroFormulario } from '../lib/mutation-errors'
 
 const schema = z.object({
   nome: z.string().min(1, 'Nome e obrigatorio'),
@@ -43,22 +43,7 @@ export function InsumoForm({ insumo, erro, onSubmit, onCancel }: InsumoFormProps
     },
   })
 
-  useEffect(() => {
-    if (!erro) return
-    const body = erro.body as Record<string, unknown> | null | undefined
-    let algumCampoMapeado = false
-    for (const campo of CAMPOS_CONHECIDOS) {
-      const mensagens = body?.[campo]
-      if (Array.isArray(mensagens) && typeof mensagens[0] === 'string') {
-        setError(campo, { message: mensagens[0] })
-        algumCampoMapeado = true
-      }
-    }
-    if (!algumCampoMapeado) {
-      const detail = typeof body?.detail === 'string' ? body.detail : erro.message
-      setError('root', { message: detail })
-    }
-  }, [erro, setError])
+  useMapeamentoErroFormulario(erro, setError, CAMPOS_CONHECIDOS)
 
   function aoSubmeter(values: InsumoFormValues) {
     onSubmit({ nome: values.nome, tipo: values.tipo, carencia_dias: Number(values.carencia_dias) })
