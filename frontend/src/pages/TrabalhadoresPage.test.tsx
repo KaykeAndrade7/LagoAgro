@@ -65,13 +65,22 @@ describe('TrabalhadoresPage', () => {
   it('expandir um trabalhador mostra suas diarias', async () => {
     vi.mocked(trabalhadoresApi.listarTrabalhadores).mockResolvedValue([trabalhador])
     vi.mocked(diariasApi.listarDiarias).mockResolvedValue([
-      { id: 1, trabalhador: 1, plantio: 1, data: '2026-08-05', valor: '120.00', lancamento: null },
+      { id: 1, trabalhador: 1, plantio: 1, data: '2026-08-05', valor: '50.00', lancamento: null },
     ])
 
     renderComProvider()
     await userEvent.click(await screen.findByText(/Joao/))
 
-    expect(await screen.findByText(/120.00/)).toBeInTheDocument()
+    expect(await screen.findByText(/50.00/)).toBeInTheDocument()
+  })
+
+  it('mostra o valor da diaria no resumo do trabalhador', async () => {
+    vi.mocked(trabalhadoresApi.listarTrabalhadores).mockResolvedValue([trabalhador])
+    vi.mocked(diariasApi.listarDiarias).mockResolvedValue([])
+
+    renderComProvider()
+
+    expect(await screen.findByText(/R\$ 120\.00\/diária/)).toBeInTheDocument()
   })
 
   it('diaria paga mostra "Paga" em vez de Editar/Excluir', async () => {
