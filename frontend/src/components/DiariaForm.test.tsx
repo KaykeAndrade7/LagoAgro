@@ -64,11 +64,13 @@ describe('DiariaForm', () => {
   })
 
   it('mostra mensagem geral quando erro do backend nao bate com nenhum campo', async () => {
-    const erro = new ApiError(400, 'Nao e possivel alterar uma diaria ja paga.', {})
+    const erro = new ApiError(400, 'Erro na requisicao', {
+      non_field_errors: ['Não é possível alterar uma diária já paga.'],
+    })
     render(
       <DiariaForm trabalhadorId={1} plantioOpcoes={plantioOpcoes} erro={erro} onSubmit={vi.fn()} onCancel={vi.fn()} />,
     )
 
-    expect(await screen.findByText('Nao e possivel alterar uma diaria ja paga.')).toBeInTheDocument()
+    expect(await screen.findByText('Não é possível alterar uma diária já paga.')).toBeInTheDocument()
   })
 })

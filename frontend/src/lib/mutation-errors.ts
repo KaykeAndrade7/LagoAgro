@@ -19,7 +19,9 @@ export function useMapeamentoErroFormulario<T extends FieldValues>(
       }
     }
     if (!algumCampoMapeado) {
-      const detail = typeof body?.detail === 'string' ? body.detail : erro.message
+      const naoCampo = body?.non_field_errors
+      const mensagemNaoCampo = Array.isArray(naoCampo) && typeof naoCampo[0] === 'string' ? naoCampo[0] : null
+      const detail = typeof body?.detail === 'string' ? body.detail : (mensagemNaoCampo ?? erro.message)
       setError('root', { message: detail })
     }
   }, [erro, setError, camposConhecidos])
