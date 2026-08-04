@@ -245,7 +245,7 @@ export function TrabalhadoresPage() {
               ) : (
                 <div className="flex items-center justify-between">
                   <button onClick={() => alternarExpansao(trabalhador.id)} className="text-left font-semibold">
-                    {expandido ? '▾' : '▸'} {trabalhador.nome}
+                    {expandido ? '▾' : '▸'} {trabalhador.nome} — R$ {trabalhador.valor_diaria}/diária
                     {!trabalhador.ativo && ' (inativo)'}
                   </button>
                   <div className="flex gap-2 text-sm">
