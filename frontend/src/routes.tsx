@@ -10,6 +10,8 @@ import { InsumosPage } from './pages/InsumosPage'
 import { AplicacoesPage } from './pages/AplicacoesPage'
 import { TarefasPage } from './pages/TarefasPage'
 import { ColheitasPage } from './pages/ColheitasPage'
+import { TrabalhadoresPage } from './pages/TrabalhadoresPage'
+import { FinanceiroPage } from './pages/FinanceiroPage'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -89,6 +91,26 @@ export const router = createBrowserRouter([
       <ProtectedRoute>
         <AppShell>
           <ColheitasPage />
+        </AppShell>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/trabalhadores',
+    element: (
+      <ProtectedRoute>
+        <AppShell>
+          <TrabalhadoresPage />
+        </AppShell>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/financeiro',
+    element: (
+      <ProtectedRoute>
+        <AppShell>
+          <FinanceiroPage />
         </AppShell>
       </ProtectedRoute>
     ),

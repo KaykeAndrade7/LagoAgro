@@ -207,4 +207,40 @@ describe('navegacao para as paginas de cadastro', () => {
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Colheitas' })).toBeInTheDocument())
   })
+
+  it('link de Trabalhadores navega para a pagina de trabalhadores', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access: 'token-1' }), { status: 200 })) // refresh
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 1, username: 'produtor1' }), { status: 200 })) // me
+      // TrabalhadoresPage dispara 5 fetches paralelos (trabalhadores/diarias/plantios/talhoes/culturas).
+      .mockImplementation(async () => new Response(JSON.stringify([]), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const user = userEvent.setup()
+
+    render(<App />)
+    await waitFor(() => expect(screen.getByText(/Bem-vindo, produtor1/)).toBeInTheDocument())
+
+    await user.click(screen.getByRole('link', { name: 'Trabalhadores' }))
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Trabalhadores' })).toBeInTheDocument())
+  })
+
+  it('link de Financeiro navega para a pagina de financeiro', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access: 'token-1' }), { status: 200 })) // refresh
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 1, username: 'produtor1' }), { status: 200 })) // me
+      // FinanceiroPage dispara 5 fetches paralelos (lancamentos/diarias/plantios/talhoes/culturas).
+      .mockImplementation(async () => new Response(JSON.stringify([]), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const user = userEvent.setup()
+
+    render(<App />)
+    await waitFor(() => expect(screen.getByText(/Bem-vindo, produtor1/)).toBeInTheDocument())
+
+    await user.click(screen.getByRole('link', { name: 'Financeiro' }))
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Financeiro' })).toBeInTheDocument())
+  })
 })

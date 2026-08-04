@@ -34,6 +34,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link to="/aplicacoes">Aplicações</Link>
             <Link to="/tarefas">Tarefas</Link>
             <Link to="/colheitas">Colheitas</Link>
+            <Link to="/trabalhadores">Trabalhadores</Link>
+            <Link to="/financeiro">Financeiro</Link>
           </nav>
         </div>
         <div className="flex items-center gap-3 text-sm">
