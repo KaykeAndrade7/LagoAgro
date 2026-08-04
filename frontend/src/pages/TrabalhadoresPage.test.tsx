@@ -93,6 +93,8 @@ describe('TrabalhadoresPage', () => {
     await userEvent.click(await screen.findByText(/Joao/))
 
     expect(await screen.findByText('Paga')).toBeInTheDocument()
+    expect(screen.getAllByText('Editar')).toHaveLength(1)
+    expect(screen.getAllByText('Excluir')).toHaveLength(1)
   })
 
   it('excluir trabalhador com diarias mostra a contagem no dialogo', async () => {

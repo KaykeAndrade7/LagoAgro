@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { FinanceiroPage } from './FinanceiroPage'
+import { ApiError } from '../lib/api-client'
 import * as lancamentosApi from '../api/lancamentos'
 import * as diariasApi from '../api/diarias'
 import * as plantiosApi from '../api/plantios'
@@ -102,5 +103,26 @@ describe('FinanceiroPage', () => {
     expect(
       await screen.findByText('Este lancamento paga 1 diaria(s) e nao podera ser excluido.'),
     ).toBeInTheDocument()
+  })
+
+  it('erro 409 simulado do backend aparece como mensagem no dialogo sem fecha-lo', async () => {
+    vi.mocked(lancamentosApi.listarLancamentos).mockResolvedValue([
+      { id: 1, plantio: 1, valor: '150.00', data: '2026-08-05', descricao: 'Compra de mudas', setor: 'insumos' },
+    ])
+    vi.mocked(lancamentosApi.excluirLancamento).mockRejectedValue(
+      new ApiError(409, 'Nao e possivel excluir: existem registros vinculados a este item.', {
+        detail: 'Nao e possivel excluir: existem registros vinculados a este item.',
+      }),
+    )
+
+    renderComProvider()
+    await screen.findByText(/Compra de mudas/)
+    await userEvent.click(screen.getByText('Excluir'))
+    await userEvent.click(screen.getByText('Confirmar'))
+
+    expect(
+      await screen.findByText('Nao e possivel excluir: existem registros vinculados a este item.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 })
