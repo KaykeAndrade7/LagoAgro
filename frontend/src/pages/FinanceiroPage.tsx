@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   listarLancamentos,
@@ -8,6 +9,7 @@ import {
   ROTULOS_SETOR,
   type LancamentoFinanceiro,
   type LancamentoFinanceiroInput,
+  type TipoLancamento,
 } from '../api/lancamentos'
 import { listarDiarias } from '../api/diarias'
 import { listarPlantios } from '../api/plantios'
@@ -19,12 +21,31 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { LancamentoForm } from '../components/LancamentoForm'
 import { Badge, Button, Card, EmptyState, ErrorState, IconPencil, IconTrash, LoadingState, PageHeader } from '../components/ui'
 
+type FiltroTipo = 'todos' | TipoLancamento
+
+function BotaoFiltro({ ativo, onClick, children }: { ativo: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        ativo
+          ? 'rounded-full border-2 border-ink bg-accent px-3.5 py-1.5 font-display text-sm font-bold text-accent-contrast'
+          : 'rounded-full border-2 border-line bg-paper px-3.5 py-1.5 font-display text-sm font-bold text-ink-soft'
+      }
+    >
+      {children}
+    </button>
+  )
+}
+
 export function FinanceiroPage() {
   const queryClient = useQueryClient()
   const [formulario, setFormulario] = useState<{ tipo: 'novo' } | { tipo: 'editar'; lancamento: LancamentoFinanceiro } | null>(null)
   const [erroFormulario, setErroFormulario] = useState<ApiError | null>(null)
   const [exclusaoPendente, setExclusaoPendente] = useState<LancamentoFinanceiro | null>(null)
   const [erroExclusao, setErroExclusao] = useState<string | null>(null)
+  const [filtro, setFiltro] = useState<FiltroTipo>('todos')
 
   const lancamentosQuery = useQuery({ queryKey: ['lancamentos'], queryFn: listarLancamentos })
   const diariasQuery = useQuery({ queryKey: ['diarias'], queryFn: listarDiarias })
@@ -114,8 +135,15 @@ export function FinanceiroPage() {
       : 'Tem certeza que deseja excluir este lancamento?'
   }
 
+  // Totais sempre somam TODOS os lancamentos, independente do filtro de
+  // exibicao ativo abaixo - trocar o filtro muda só a lista, nunca os totais.
+  const totalGasto = lancamentos.filter((l) => l.tipo === 'gasto').reduce((soma, l) => soma + Number(l.valor), 0)
+  const totalGanho = lancamentos.filter((l) => l.tipo === 'ganho').reduce((soma, l) => soma + Number(l.valor), 0)
+  const saldoLiquido = totalGanho - totalGasto
+
   const lancamentosOrdenados = [...lancamentos].sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0))
-  const totalGeral = lancamentos.reduce((soma, lancamento) => soma + Number(lancamento.valor), 0)
+  const lancamentosFiltrados =
+    filtro === 'todos' ? lancamentosOrdenados : lancamentosOrdenados.filter((l) => l.tipo === filtro)
 
   return (
     <div>
@@ -128,9 +156,34 @@ export function FinanceiroPage() {
         }
       />
 
-      <Card className="mb-5 px-5 py-4">
-        <span className="font-mono text-xl font-semibold text-ink">Total: R$ {totalGeral.toFixed(2)}</span>
+      <Card className="mb-5 grid grid-cols-1 gap-3 px-5 py-4 sm:grid-cols-3">
+        <div>
+          <p className="text-sm font-bold text-ink-soft">Total gasto</p>
+          <p className="font-mono text-lg font-semibold text-ink">R$ {totalGasto.toFixed(2)}</p>
+        </div>
+        <div>
+          <p className="text-sm font-bold text-ink-soft">Total ganho</p>
+          <p className="font-mono text-lg font-semibold text-accent">R$ {totalGanho.toFixed(2)}</p>
+        </div>
+        <div>
+          <p className="text-sm font-bold text-ink-soft">Saldo líquido</p>
+          <p className={`font-mono text-lg font-semibold ${saldoLiquido >= 0 ? 'text-accent' : 'text-ink'}`}>
+            R$ {saldoLiquido.toFixed(2)}
+          </p>
+        </div>
       </Card>
+
+      <div className="mb-5 flex gap-2">
+        <BotaoFiltro ativo={filtro === 'todos'} onClick={() => setFiltro('todos')}>
+          Todos
+        </BotaoFiltro>
+        <BotaoFiltro ativo={filtro === 'gasto'} onClick={() => setFiltro('gasto')}>
+          Gastos
+        </BotaoFiltro>
+        <BotaoFiltro ativo={filtro === 'ganho'} onClick={() => setFiltro('ganho')}>
+          Ganhos
+        </BotaoFiltro>
+      </div>
 
       {formulario?.tipo === 'novo' && (
         <Card className="mb-5 p-5">
@@ -143,10 +196,10 @@ export function FinanceiroPage() {
         </Card>
       )}
 
-      {lancamentosOrdenados.length === 0 && formulario?.tipo !== 'novo' && <EmptyState>Nenhum lançamento registrado ainda.</EmptyState>}
+      {lancamentosFiltrados.length === 0 && formulario?.tipo !== 'novo' && <EmptyState>Nenhum lançamento registrado ainda.</EmptyState>}
 
       <ul className="space-y-3">
-        {lancamentosOrdenados.map((lancamento) =>
+        {lancamentosFiltrados.map((lancamento) =>
           formulario?.tipo === 'editar' && formulario.lancamento.id === lancamento.id ? (
             <li key={lancamento.id}>
               <Card className="p-5">
@@ -175,7 +228,15 @@ export function FinanceiroPage() {
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2 sm:shrink-0">
-                  <span className="font-mono text-lg font-semibold text-ink">R$ {lancamento.valor}</span>
+                  <span
+                    className={
+                      lancamento.tipo === 'ganho'
+                        ? 'font-mono text-lg font-semibold text-accent'
+                        : 'font-mono text-lg font-semibold text-ink'
+                    }
+                  >
+                    {lancamento.tipo === 'ganho' ? '+' : '−'} R$ {lancamento.valor}
+                  </span>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="sm" onClick={() => abrirFormulario({ tipo: 'editar', lancamento })}>
                       <IconPencil className="h-4 w-4" /> Editar
