@@ -17,12 +17,11 @@ import { ApiError, paraApiError } from '../lib/api-client'
 import { labelPlantio } from '../lib/plantio-labels'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { LancamentoForm } from '../components/LancamentoForm'
-
-type FormularioAberto = { tipo: 'novo' } | { tipo: 'editar'; lancamento: LancamentoFinanceiro } | null
+import { Badge, Button, Card, EmptyState, ErrorState, IconPencil, IconTrash, LoadingState, PageHeader } from '../components/ui'
 
 export function FinanceiroPage() {
   const queryClient = useQueryClient()
-  const [formulario, setFormulario] = useState<FormularioAberto>(null)
+  const [formulario, setFormulario] = useState<{ tipo: 'novo' } | { tipo: 'editar'; lancamento: LancamentoFinanceiro } | null>(null)
   const [erroFormulario, setErroFormulario] = useState<ApiError | null>(null)
   const [exclusaoPendente, setExclusaoPendente] = useState<LancamentoFinanceiro | null>(null)
   const [erroExclusao, setErroExclusao] = useState<string | null>(null)
@@ -33,7 +32,7 @@ export function FinanceiroPage() {
   const talhoesQuery = useQuery({ queryKey: ['talhoes'], queryFn: listarTalhoes })
   const culturasQuery = useQuery({ queryKey: ['culturas'], queryFn: listarCulturas })
 
-  function abrirFormulario(proximo: FormularioAberto) {
+  function abrirFormulario(proximo: typeof formulario) {
     setErroFormulario(null)
     setFormulario(proximo)
   }
@@ -75,30 +74,21 @@ export function FinanceiroPage() {
     talhoesQuery.isLoading ||
     culturasQuery.isLoading
   ) {
-    return <p>Carregando...</p>
+    return <LoadingState />
   }
 
-  if (
-    lancamentosQuery.isError ||
-    plantiosQuery.isError ||
-    talhoesQuery.isError ||
-    culturasQuery.isError
-  ) {
+  if (lancamentosQuery.isError || plantiosQuery.isError || talhoesQuery.isError || culturasQuery.isError) {
     return (
-      <div>
-        <p>Nao foi possivel carregar os lancamentos.</p>
-        <button
-          onClick={() => {
-            lancamentosQuery.refetch()
-            diariasQuery.refetch()
-            plantiosQuery.refetch()
-            talhoesQuery.refetch()
-            culturasQuery.refetch()
-          }}
-        >
-          Tentar novamente
-        </button>
-      </div>
+      <ErrorState
+        message="Não foi possível carregar os lançamentos."
+        onRetry={() => {
+          lancamentosQuery.refetch()
+          diariasQuery.refetch()
+          plantiosQuery.refetch()
+          talhoesQuery.refetch()
+          culturasQuery.refetch()
+        }}
+      />
     )
   }
 
@@ -129,57 +119,80 @@ export function FinanceiroPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Financeiro</h1>
-        <button
-          onClick={() => abrirFormulario({ tipo: 'novo' })}
-          className="rounded bg-green-700 px-3 py-1 text-sm text-white"
-        >
-          + Lançamento
-        </button>
-      </div>
+      <PageHeader
+        title="Financeiro"
+        action={
+          <Button size="sm" onClick={() => abrirFormulario({ tipo: 'novo' })}>
+            + Lançamento
+          </Button>
+        }
+      />
 
-      <p className="mb-4 font-semibold">Total: R$ {totalGeral.toFixed(2)}</p>
+      <Card className="mb-5 px-5 py-4">
+        <span className="font-mono text-xl font-semibold text-ink">Total: R$ {totalGeral.toFixed(2)}</span>
+      </Card>
 
       {formulario?.tipo === 'novo' && (
-        <LancamentoForm
-          plantioOpcoes={plantioOpcoes}
-          erro={erroFormulario}
-          onSubmit={(input) => criarMutation.mutate(input)}
-          onCancel={() => abrirFormulario(null)}
-        />
+        <Card className="mb-5 p-5">
+          <LancamentoForm
+            plantioOpcoes={plantioOpcoes}
+            erro={erroFormulario}
+            onSubmit={(input) => criarMutation.mutate(input)}
+            onCancel={() => abrirFormulario(null)}
+          />
+        </Card>
       )}
 
-      <ul>
+      {lancamentosOrdenados.length === 0 && formulario?.tipo !== 'novo' && <EmptyState>Nenhum lançamento registrado ainda.</EmptyState>}
+
+      <ul className="space-y-3">
         {lancamentosOrdenados.map((lancamento) =>
           formulario?.tipo === 'editar' && formulario.lancamento.id === lancamento.id ? (
-            <li key={lancamento.id} className="mb-2 border p-2">
-              <LancamentoForm
-                plantioOpcoes={plantioOpcoes}
-                lancamento={lancamento}
-                erro={erroFormulario}
-                onSubmit={(input) => atualizarMutation.mutate({ id: lancamento.id, input })}
-                onCancel={() => abrirFormulario(null)}
-              />
+            <li key={lancamento.id}>
+              <Card className="p-5">
+                <LancamentoForm
+                  plantioOpcoes={plantioOpcoes}
+                  lancamento={lancamento}
+                  erro={erroFormulario}
+                  onSubmit={(input) => atualizarMutation.mutate({ id: lancamento.id, input })}
+                  onCancel={() => abrirFormulario(null)}
+                />
+              </Card>
             </li>
           ) : (
-            <li key={lancamento.id} className="mb-2 flex items-center justify-between border p-2">
-              <span>
-                {labelPlantio(plantios, talhoes, culturas, lancamento.plantio)} —{' '}
-                {new Date(`${lancamento.data}T00:00:00`).toLocaleDateString('pt-BR')} — {lancamento.descricao} —{' '}
-                {ROTULOS_SETOR[lancamento.setor]} — R$ {lancamento.valor}
-              </span>
-              <div className="flex gap-2 text-sm">
-                <button onClick={() => abrirFormulario({ tipo: 'editar', lancamento })}>Editar</button>
-                <button
-                  onClick={() => {
-                    setErroExclusao(null)
-                    setExclusaoPendente(lancamento)
-                  }}
-                >
-                  Excluir
-                </button>
-              </div>
+            <li key={lancamento.id}>
+              <Card className="flex flex-col gap-2 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-display font-bold text-ink">{lancamento.descricao}</p>
+                  <p className="mt-0.5 truncate text-sm font-semibold text-ink-soft">
+                    {labelPlantio(plantios, talhoes, culturas, lancamento.plantio)}
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <Badge tone="neutral">{ROTULOS_SETOR[lancamento.setor]}</Badge>
+                    <span className="font-mono text-sm text-ink-soft">
+                      {new Date(`${lancamento.data}T00:00:00`).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-2 sm:shrink-0">
+                  <span className="font-mono text-lg font-semibold text-ink">R$ {lancamento.valor}</span>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => abrirFormulario({ tipo: 'editar', lancamento })}>
+                      <IconPencil className="h-4 w-4" /> Editar
+                    </Button>
+                    <Button
+                      variant="danger-ghost"
+                      size="sm"
+                      onClick={() => {
+                        setErroExclusao(null)
+                        setExclusaoPendente(lancamento)
+                      }}
+                    >
+                      <IconTrash className="h-4 w-4" /> Excluir
+                    </Button>
+                  </div>
+                </div>
+              </Card>
             </li>
           ),
         )}
@@ -187,7 +200,7 @@ export function FinanceiroPage() {
 
       <ConfirmDialog
         aberto={exclusaoPendente !== null}
-        titulo="Excluir lancamento"
+        titulo="Excluir lançamento"
         mensagem={mensagemExclusao()}
         erro={erroExclusao ?? undefined}
         onConfirm={() => {

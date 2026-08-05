@@ -18,6 +18,17 @@ import { labelPlantio } from '../lib/plantio-labels'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { TarefaForm } from '../components/TarefaForm'
 import { TarefaItem } from '../components/TarefaItem'
+import {
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  FormError,
+  IconPencil,
+  IconTrash,
+  LoadingState,
+  PageHeader,
+} from '../components/ui'
 
 type FormularioAberto = { tipo: 'novo' } | { tipo: 'editar'; tarefa: Tarefa } | null
 
@@ -80,24 +91,20 @@ export function TarefasPage() {
   })
 
   if (tarefasQuery.isLoading || plantiosQuery.isLoading || talhoesQuery.isLoading || culturasQuery.isLoading) {
-    return <p>Carregando...</p>
+    return <LoadingState />
   }
 
   if (tarefasQuery.isError || plantiosQuery.isError || talhoesQuery.isError || culturasQuery.isError) {
     return (
-      <div>
-        <p>Nao foi possivel carregar as tarefas.</p>
-        <button
-          onClick={() => {
-            tarefasQuery.refetch()
-            plantiosQuery.refetch()
-            talhoesQuery.refetch()
-            culturasQuery.refetch()
-          }}
-        >
-          Tentar novamente
-        </button>
-      </div>
+      <ErrorState
+        message="Não foi possível carregar as tarefas."
+        onRetry={() => {
+          tarefasQuery.refetch()
+          plantiosQuery.refetch()
+          talhoesQuery.refetch()
+          culturasQuery.refetch()
+        }}
+      />
     )
   }
 
@@ -117,65 +124,80 @@ export function TarefasPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Tarefas</h1>
-        <button
-          onClick={() => abrirFormulario({ tipo: 'novo' })}
-          className="rounded bg-green-700 px-3 py-1 text-sm text-white"
-        >
-          + Tarefa
-        </button>
+      <PageHeader
+        title="Tarefas"
+        action={
+          <Button size="sm" onClick={() => abrirFormulario({ tipo: 'novo' })}>
+            + Tarefa
+          </Button>
+        }
+      />
+
+      <Button variant="ghost" size="sm" className="mb-4 px-0 normal-case" onClick={() => setMostrarConcluidas((v) => !v)}>
+        {mostrarConcluidas ? 'Ocultar concluídas' : 'Ver concluídas'}
+      </Button>
+
+      <div className="mb-4">
+        <FormError>{erroConclusao}</FormError>
       </div>
 
-      <button onClick={() => setMostrarConcluidas((v) => !v)} className="mb-4 text-sm underline">
-        {mostrarConcluidas ? 'Ocultar concluídas' : 'Ver concluídas'}
-      </button>
-
-      {erroConclusao && <p className="mb-2 text-sm text-red-600">{erroConclusao}</p>}
-
       {formulario?.tipo === 'novo' && (
-        <TarefaForm
-          plantioOpcoes={plantioOpcoes}
-          erro={erroFormulario}
-          onSubmit={(input) => criarMutation.mutate(input)}
-          onCancel={() => abrirFormulario(null)}
-        />
+        <Card className="mb-5 p-5">
+          <TarefaForm
+            plantioOpcoes={plantioOpcoes}
+            erro={erroFormulario}
+            onSubmit={(input) => criarMutation.mutate(input)}
+            onCancel={() => abrirFormulario(null)}
+          />
+        </Card>
       )}
 
-      <ul>
+      {tarefasVisiveis.length === 0 && formulario?.tipo !== 'novo' && <EmptyState>Nenhuma tarefa por aqui.</EmptyState>}
+
+      <ul className="space-y-3">
         {tarefasVisiveis.map((tarefa) =>
           formulario?.tipo === 'editar' && formulario.tarefa.id === tarefa.id ? (
-            <li key={tarefa.id} className="mb-2 border p-2">
-              <TarefaForm
-                plantioOpcoes={plantioOpcoes}
-                tarefa={tarefa}
-                erro={erroFormulario}
-                onSubmit={(input) => atualizarMutation.mutate({ id: tarefa.id, input })}
-                onCancel={() => abrirFormulario(null)}
-              />
+            <li key={tarefa.id}>
+              <Card className="p-5">
+                <TarefaForm
+                  plantioOpcoes={plantioOpcoes}
+                  tarefa={tarefa}
+                  erro={erroFormulario}
+                  onSubmit={(input) => atualizarMutation.mutate({ id: tarefa.id, input })}
+                  onCancel={() => abrirFormulario(null)}
+                />
+              </Card>
             </li>
           ) : (
-            <li key={tarefa.id} className="mb-2 flex items-center justify-between border p-2">
-              <TarefaItem
-                tarefa={tarefa}
-                rotulo={labelPlantio(plantios, talhoes, culturas, tarefa.plantio)}
-                atrasada={estaAtrasada(tarefa, hoje)}
-                onToggleConcluida={(concluida) => {
-                  setErroConclusao(null)
-                  concluirMutation.mutate({ id: tarefa.id, concluida })
-                }}
-              />
-              <div className="flex gap-2 text-sm">
-                <button onClick={() => abrirFormulario({ tipo: 'editar', tarefa })}>Editar</button>
-                <button
-                  onClick={() => {
-                    setErroExclusao(null)
-                    setExclusaoPendente(tarefa)
+            <li key={tarefa.id}>
+              <Card className="flex flex-col gap-1 px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
+                <TarefaItem
+                  tarefa={tarefa}
+                  rotulo={labelPlantio(plantios, talhoes, culturas, tarefa.plantio)}
+                  atrasada={estaAtrasada(tarefa, hoje)}
+                  hoje={tarefa.data === hoje}
+                  comBorda={false}
+                  onToggleConcluida={(concluida) => {
+                    setErroConclusao(null)
+                    concluirMutation.mutate({ id: tarefa.id, concluida })
                   }}
-                >
-                  Excluir
-                </button>
-              </div>
+                />
+                <div className="flex justify-end gap-1 sm:shrink-0">
+                  <Button variant="ghost" size="sm" onClick={() => abrirFormulario({ tipo: 'editar', tarefa })}>
+                    <IconPencil className="h-4 w-4" /> Editar
+                  </Button>
+                  <Button
+                    variant="danger-ghost"
+                    size="sm"
+                    onClick={() => {
+                      setErroExclusao(null)
+                      setExclusaoPendente(tarefa)
+                    }}
+                  >
+                    <IconTrash className="h-4 w-4" /> Excluir
+                  </Button>
+                </div>
+              </Card>
             </li>
           ),
         )}

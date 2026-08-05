@@ -18,6 +18,18 @@ import { labelPlantio } from '../lib/plantio-labels'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { TrabalhadorForm } from '../components/TrabalhadorForm'
 import { DiariaForm } from '../components/DiariaForm'
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  IconChevronDown,
+  IconPencil,
+  IconTrash,
+  LoadingState,
+  PageHeader,
+} from '../components/ui'
 
 type FormularioAberto =
   | { tipo: 'novo-trabalhador' }
@@ -145,7 +157,7 @@ export function TrabalhadoresPage() {
     talhoesQuery.isLoading ||
     culturasQuery.isLoading
   ) {
-    return <p>Carregando...</p>
+    return <LoadingState />
   }
 
   if (
@@ -156,20 +168,16 @@ export function TrabalhadoresPage() {
     culturasQuery.isError
   ) {
     return (
-      <div>
-        <p>Nao foi possivel carregar os trabalhadores.</p>
-        <button
-          onClick={() => {
-            trabalhadoresQuery.refetch()
-            diariasQuery.refetch()
-            plantiosQuery.refetch()
-            talhoesQuery.refetch()
-            culturasQuery.refetch()
-          }}
-        >
-          Tentar novamente
-        </button>
-      </div>
+      <ErrorState
+        message="Não foi possível carregar os trabalhadores."
+        onRetry={() => {
+          trabalhadoresQuery.refetch()
+          diariasQuery.refetch()
+          plantiosQuery.refetch()
+          talhoesQuery.refetch()
+          culturasQuery.refetch()
+        }}
+      />
     )
   }
 
@@ -192,7 +200,7 @@ export function TrabalhadoresPage() {
         : 'Tem certeza que deseja excluir este trabalhador?'
     }
     if (exclusaoPendente?.tipo === 'diaria') {
-      return 'Tem certeza que deseja excluir esta diaria?'
+      return 'Tem certeza que deseja excluir esta diária?'
     }
     return ''
   }
@@ -208,48 +216,80 @@ export function TrabalhadoresPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Trabalhadores</h1>
-        <button
-          onClick={() => abrirFormulario({ tipo: 'novo-trabalhador' })}
-          className="rounded bg-green-700 px-3 py-1 text-sm text-white"
-        >
-          + Trabalhador
-        </button>
-      </div>
+      <PageHeader
+        title="Trabalhadores"
+        action={
+          <Button size="sm" onClick={() => abrirFormulario({ tipo: 'novo-trabalhador' })}>
+            + Trabalhador
+          </Button>
+        }
+      />
 
-      {mensagemPagamento && <p className="mb-2 text-sm text-green-700">{mensagemPagamento}</p>}
-
-      {formulario?.tipo === 'novo-trabalhador' && (
-        <TrabalhadorForm
-          erro={erroFormulario}
-          onSubmit={(input) => criarTrabalhadorMutation.mutate(input)}
-          onCancel={() => abrirFormulario(null)}
-        />
+      {mensagemPagamento && (
+        <p className="mb-4 rounded-md border-2 border-accent/30 bg-accent-soft px-3 py-2 text-sm font-bold text-accent">
+          {mensagemPagamento}
+        </p>
       )}
 
-      <ul>
+      {formulario?.tipo === 'novo-trabalhador' && (
+        <Card className="mb-5 p-5">
+          <TrabalhadorForm
+            erro={erroFormulario}
+            onSubmit={(input) => criarTrabalhadorMutation.mutate(input)}
+            onCancel={() => abrirFormulario(null)}
+          />
+        </Card>
+      )}
+
+      {trabalhadores.length === 0 && formulario?.tipo !== 'novo-trabalhador' && (
+        <EmptyState>Nenhum trabalhador cadastrado ainda.</EmptyState>
+      )}
+
+      <ul className="space-y-3">
         {trabalhadores.map((trabalhador) => {
           const diariasDoTrabalhador = diarias.filter((d) => d.trabalhador === trabalhador.id)
           const expandido = expandidos.has(trabalhador.id)
 
+          if (formulario?.tipo === 'editar-trabalhador' && formulario.trabalhador.id === trabalhador.id) {
+            return (
+              <li key={trabalhador.id}>
+                <Card className="p-5">
+                  <TrabalhadorForm
+                    trabalhador={trabalhador}
+                    erro={erroFormulario}
+                    onSubmit={(input) => atualizarTrabalhadorMutation.mutate({ id: trabalhador.id, input })}
+                    onCancel={() => abrirFormulario(null)}
+                  />
+                </Card>
+              </li>
+            )
+          }
+
           return (
-            <li key={trabalhador.id} className="mb-2 border p-2">
-              {formulario?.tipo === 'editar-trabalhador' && formulario.trabalhador.id === trabalhador.id ? (
-                <TrabalhadorForm
-                  trabalhador={trabalhador}
-                  erro={erroFormulario}
-                  onSubmit={(input) => atualizarTrabalhadorMutation.mutate({ id: trabalhador.id, input })}
-                  onCancel={() => abrirFormulario(null)}
-                />
-              ) : (
-                <div className="flex items-center justify-between">
-                  <button onClick={() => alternarExpansao(trabalhador.id)} className="text-left font-semibold">
-                    {expandido ? '▾' : '▸'} {trabalhador.nome} — R$ {trabalhador.valor_diaria}/diária
-                    {!trabalhador.ativo && ' (inativo)'}
+            <li key={trabalhador.id}>
+              <Card>
+                <div className="flex flex-col gap-2 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                  <button
+                    onClick={() => alternarExpansao(trabalhador.id)}
+                    className="flex min-w-0 items-center gap-2 text-left"
+                    aria-expanded={expandido}
+                  >
+                    <IconChevronDown
+                      className={`h-5 w-5 shrink-0 text-ink-soft transition-transform ${expandido ? '' : '-rotate-90'}`}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-display font-bold text-ink">{trabalhador.nome}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="font-mono text-sm text-ink-soft">R$ {trabalhador.valor_diaria}/diária</span>
+                        {!trabalhador.ativo && <Badge tone="neutral">Inativo</Badge>}
+                      </span>
+                    </span>
                   </button>
-                  <div className="flex gap-2 text-sm">
-                    <button
+                  <div className="flex flex-wrap gap-1 sm:shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="normal-case"
                       onClick={() => {
                         setErroPagamento(null)
                         setMensagemPagamento(null)
@@ -257,81 +297,100 @@ export function TrabalhadoresPage() {
                       }}
                     >
                       Pagar diárias pendentes
-                    </button>
-                    <button onClick={() => abrirFormulario({ tipo: 'editar-trabalhador', trabalhador })}>
-                      Editar
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => abrirFormulario({ tipo: 'editar-trabalhador', trabalhador })}
+                    >
+                      <IconPencil className="h-4 w-4" /> Editar
+                    </Button>
+                    <Button
+                      variant="danger-ghost"
+                      size="sm"
                       onClick={() => {
                         setErroExclusao(null)
                         setExclusaoPendente({ tipo: 'trabalhador', trabalhador })
                       }}
                     >
-                      Excluir
-                    </button>
+                      <IconTrash className="h-4 w-4" /> Excluir
+                    </Button>
                   </div>
                 </div>
-              )}
 
-              {expandido && (
-                <div className="ml-4 mt-2">
-                  {formulario?.tipo === 'nova-diaria' && formulario.trabalhadorId === trabalhador.id && (
-                    <DiariaForm
-                      trabalhadorId={trabalhador.id}
-                      plantioOpcoes={plantioOpcoes}
-                      erro={erroFormulario}
-                      onSubmit={(input) => criarDiariaMutation.mutate(input)}
-                      onCancel={() => abrirFormulario(null)}
-                    />
-                  )}
-                  <ul>
-                    {diariasDoTrabalhador.map((diaria) => (
-                      <li key={diaria.id} className="mb-1 flex items-center justify-between">
-                        {formulario?.tipo === 'editar-diaria' && formulario.diaria.id === diaria.id ? (
-                          <DiariaForm
-                            trabalhadorId={trabalhador.id}
-                            plantioOpcoes={plantioOpcoes}
-                            diaria={diaria}
-                            erro={erroFormulario}
-                            onSubmit={(input) => atualizarDiariaMutation.mutate({ id: diaria.id, input })}
-                            onCancel={() => abrirFormulario(null)}
-                          />
+                {expandido && (
+                  <div className="dashed-divider px-4 pb-4 pt-3">
+                    {formulario?.tipo === 'nova-diaria' && formulario.trabalhadorId === trabalhador.id && (
+                      <DiariaForm
+                        trabalhadorId={trabalhador.id}
+                        plantioOpcoes={plantioOpcoes}
+                        erro={erroFormulario}
+                        onSubmit={(input) => criarDiariaMutation.mutate(input)}
+                        onCancel={() => abrirFormulario(null)}
+                      />
+                    )}
+                    {diariasDoTrabalhador.length === 0 && formulario?.tipo !== 'nova-diaria' && (
+                      <p className="py-2 text-sm font-semibold text-ink-soft">Nenhuma diária registrada ainda.</p>
+                    )}
+                    <ul className="space-y-1">
+                      {diariasDoTrabalhador.map((diaria) =>
+                        formulario?.tipo === 'editar-diaria' && formulario.diaria.id === diaria.id ? (
+                          <li key={diaria.id}>
+                            <DiariaForm
+                              trabalhadorId={trabalhador.id}
+                              plantioOpcoes={plantioOpcoes}
+                              diaria={diaria}
+                              erro={erroFormulario}
+                              onSubmit={(input) => atualizarDiariaMutation.mutate({ id: diaria.id, input })}
+                              onCancel={() => abrirFormulario(null)}
+                            />
+                          </li>
                         ) : (
-                          <>
-                            <span>
-                              {labelPlantio(plantios, talhoes, culturas, diaria.plantio)} —{' '}
-                              {new Date(`${diaria.data}T00:00:00`).toLocaleDateString('pt-BR')} — R$ {diaria.valor}
+                          <li
+                            key={diaria.id}
+                            className="flex items-center justify-between gap-2 border-b border-dashed border-line py-2.5 last:border-0"
+                          >
+                            <span className="min-w-0 truncate font-display font-semibold text-ink">
+                              {labelPlantio(plantios, talhoes, culturas, diaria.plantio)}
+                              <span className="font-mono font-normal text-ink-soft">
+                                {' '}
+                                · {new Date(`${diaria.data}T00:00:00`).toLocaleDateString('pt-BR')} · R$ {diaria.valor}
+                              </span>
                             </span>
                             {diaria.lancamento !== null ? (
-                              <span className="text-sm text-gray-500">Paga</span>
+                              <Badge tone="accent">Paga</Badge>
                             ) : (
-                              <div className="flex gap-2 text-sm">
-                                <button onClick={() => abrirFormulario({ tipo: 'editar-diaria', diaria })}>
-                                  Editar
-                                </button>
-                                <button
+                              <div className="flex shrink-0 gap-1">
+                                <Button variant="ghost" size="sm" onClick={() => abrirFormulario({ tipo: 'editar-diaria', diaria })}>
+                                  <IconPencil className="h-4 w-4" /> Editar
+                                </Button>
+                                <Button
+                                  variant="danger-ghost"
+                                  size="sm"
                                   onClick={() => {
                                     setErroExclusao(null)
                                     setExclusaoPendente({ tipo: 'diaria', diaria })
                                   }}
                                 >
-                                  Excluir
-                                </button>
+                                  <IconTrash className="h-4 w-4" /> Excluir
+                                </Button>
                               </div>
                             )}
-                          </>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    onClick={() => abrirFormulario({ tipo: 'nova-diaria', trabalhadorId: trabalhador.id })}
-                    className="mt-1 text-sm"
-                  >
-                    + Diária
-                  </button>
-                </div>
-              )}
+                          </li>
+                        ),
+                      )}
+                    </ul>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-2 px-0"
+                      onClick={() => abrirFormulario({ tipo: 'nova-diaria', trabalhadorId: trabalhador.id })}
+                    >
+                      + Diária
+                    </Button>
+                  </div>
+                )}
+              </Card>
             </li>
           )
         })}
@@ -339,7 +398,7 @@ export function TrabalhadoresPage() {
 
       <ConfirmDialog
         aberto={exclusaoPendente !== null}
-        titulo={exclusaoPendente?.tipo === 'trabalhador' ? 'Excluir trabalhador' : 'Excluir diaria'}
+        titulo={exclusaoPendente?.tipo === 'trabalhador' ? 'Excluir trabalhador' : 'Excluir diária'}
         mensagem={mensagemExclusao()}
         erro={erroExclusao ?? undefined}
         onConfirm={() => {

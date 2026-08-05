@@ -4,6 +4,7 @@ import { z } from 'zod'
 import type { Insumo, InsumoInput } from '../api/insumos'
 import type { ApiError } from '../lib/api-client'
 import { useMapeamentoErroFormulario } from '../lib/mutation-errors'
+import { Button, Field, FormError, Input, Select } from './ui'
 
 const schema = z.object({
   nome: z.string().min(1, 'Nome e obrigatorio'),
@@ -50,39 +51,25 @@ export function InsumoForm({ insumo, erro, onSubmit, onCancel }: InsumoFormProps
   }
 
   return (
-    <form onSubmit={handleSubmit(aoSubmeter)} className="space-y-2">
-      {errors.root && <p className="text-sm text-red-600">{errors.root.message}</p>}
-      <div>
-        <label htmlFor="insumo-nome" className="block text-sm">
-          Nome
-        </label>
-        <input id="insumo-nome" {...register('nome')} className="border px-2 py-1" />
-        {errors.nome && <p className="text-sm text-red-600">{errors.nome.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="insumo-tipo" className="block text-sm">
-          Tipo
-        </label>
-        <select id="insumo-tipo" {...register('tipo')} className="border px-2 py-1">
+    <form onSubmit={handleSubmit(aoSubmeter)} className="space-y-4">
+      <FormError>{errors.root?.message}</FormError>
+      <Field id="insumo-nome" label="Nome" error={errors.nome?.message}>
+        <Input id="insumo-nome" {...register('nome')} />
+      </Field>
+      <Field id="insumo-tipo" label="Tipo" error={errors.tipo?.message}>
+        <Select id="insumo-tipo" {...register('tipo')}>
           <option value="veneno">Veneno</option>
           <option value="adubo">Adubo</option>
-        </select>
-        {errors.tipo && <p className="text-sm text-red-600">{errors.tipo.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="insumo-carencia" className="block text-sm">
-          Carencia (dias)
-        </label>
-        <input id="insumo-carencia" {...register('carencia_dias')} className="border px-2 py-1" />
-        {errors.carencia_dias && <p className="text-sm text-red-600">{errors.carencia_dias.message}</p>}
-      </div>
-      <div className="flex gap-2">
-        <button type="submit" className="rounded bg-green-700 px-3 py-1 text-sm text-white">
-          Salvar
-        </button>
-        <button type="button" onClick={onCancel} className="rounded border px-3 py-1 text-sm">
+        </Select>
+      </Field>
+      <Field id="insumo-carencia" label="Carencia (dias)" error={errors.carencia_dias?.message}>
+        <Input id="insumo-carencia" inputMode="numeric" {...register('carencia_dias')} />
+      </Field>
+      <div className="flex gap-3">
+        <Button type="submit">Salvar</Button>
+        <Button type="button" variant="ghost" onClick={onCancel}>
           Cancelar
-        </button>
+        </Button>
       </div>
     </form>
   )

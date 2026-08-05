@@ -4,6 +4,7 @@ import { z } from 'zod'
 import type { Talhao } from '../api/talhoes'
 import type { Cultura } from '../api/culturas'
 import { ROTULOS_STATUS, type Plantio, type PlantioInput, type PlantioStatus } from '../api/plantios'
+import { Button, Field, Input, Select } from './ui'
 
 const schema = z.object({
   talhao: z.coerce.number().min(1, 'Selecione um talhao'),
@@ -45,61 +46,44 @@ export function PlantioForm({ talhoes, culturas, plantio, onSubmit, onCancel }: 
   })
 
   return (
-    <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-2">
-      <div>
-        <label htmlFor="plantio-talhao" className="block text-sm">
-          Talhao
-        </label>
-        <select id="plantio-talhao" {...register('talhao')} className="border px-2 py-1">
+    <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-4">
+      <Field id="plantio-talhao" label="Talhao" error={errors.talhao?.message}>
+        <Select id="plantio-talhao" {...register('talhao')}>
           <option value={0}>Selecione...</option>
           {talhoes.map((talhao) => (
             <option key={talhao.id} value={talhao.id}>
               {talhao.nome}
             </option>
           ))}
-        </select>
-        {errors.talhao && <p className="text-sm text-red-600">{errors.talhao.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="plantio-cultura" className="block text-sm">
-          Cultura
-        </label>
-        <select id="plantio-cultura" {...register('cultura')} className="border px-2 py-1">
+        </Select>
+      </Field>
+      <Field id="plantio-cultura" label="Cultura" error={errors.cultura?.message}>
+        <Select id="plantio-cultura" {...register('cultura')}>
           <option value={0}>Selecione...</option>
           {culturas.map((cultura) => (
             <option key={cultura.id} value={cultura.id}>
               {cultura.nome}
             </option>
           ))}
-        </select>
-        {errors.cultura && <p className="text-sm text-red-600">{errors.cultura.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="plantio-data" className="block text-sm">
-          Data do plantio
-        </label>
-        <input id="plantio-data" type="date" {...register('data_plantio')} className="border px-2 py-1" />
-        {errors.data_plantio && <p className="text-sm text-red-600">{errors.data_plantio.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="plantio-status" className="block text-sm">
-          Status
-        </label>
-        <select id="plantio-status" {...register('status')} className="border px-2 py-1">
+        </Select>
+      </Field>
+      <Field id="plantio-data" label="Data do plantio" error={errors.data_plantio?.message}>
+        <Input id="plantio-data" type="date" {...register('data_plantio')} />
+      </Field>
+      <Field id="plantio-status" label="Status">
+        <Select id="plantio-status" {...register('status')}>
           {(Object.keys(ROTULOS_STATUS) as PlantioStatus[]).map((status) => (
             <option key={status} value={status}>
               {ROTULOS_STATUS[status]}
             </option>
           ))}
-        </select>
-      </div>
-      <div className="flex gap-2">
-        <button type="submit" className="rounded bg-green-700 px-3 py-1 text-sm text-white">
-          Salvar
-        </button>
-        <button type="button" onClick={onCancel} className="rounded border px-3 py-1 text-sm">
+        </Select>
+      </Field>
+      <div className="flex gap-3">
+        <Button type="submit">Salvar</Button>
+        <Button type="button" variant="ghost" onClick={onCancel}>
           Cancelar
-        </button>
+        </Button>
       </div>
     </form>
   )

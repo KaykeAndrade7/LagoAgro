@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { listarCulturas } from '../api/culturas'
+import { Card, EmptyState, ErrorState, IconChevronDown, LoadingState, PageHeader } from '../components/ui'
 
 export function CulturasPage() {
   const [expandidas, setExpandidas] = useState<Set<number>>(new Set())
@@ -19,40 +20,52 @@ export function CulturasPage() {
   }
 
   if (culturasQuery.isLoading) {
-    return <p>Carregando...</p>
+    return <LoadingState />
   }
 
   if (culturasQuery.isError) {
-    return (
-      <div>
-        <p>Nao foi possivel carregar as culturas.</p>
-        <button onClick={() => culturasQuery.refetch()}>Tentar novamente</button>
-      </div>
-    )
+    return <ErrorState message="Não foi possível carregar as culturas." onRetry={() => culturasQuery.refetch()} />
   }
 
   const culturas = culturasQuery.data ?? []
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-bold">Culturas</h1>
-      <ul>
+      <PageHeader title="Culturas" />
+
+      {culturas.length === 0 && <EmptyState>Nenhuma cultura cadastrada ainda.</EmptyState>}
+
+      <ul className="space-y-3">
         {culturas.map((cultura) => {
           const expandida = expandidas.has(cultura.id)
           return (
-            <li key={cultura.id} className="mb-2 border p-2">
-              <button onClick={() => alternarExpansao(cultura.id)} className="text-left font-semibold">
-                {expandida ? '▾' : '▸'} {cultura.nome} ({cultura.ciclo_dias} dias)
-              </button>
-              {expandida && (
-                <ul className="ml-4 mt-2">
-                  {cultura.fases.map((fase) => (
-                    <li key={fase.id} className="text-sm">
-                      {fase.nome}: dia {fase.dia_inicio} a {fase.dia_fim}
-                    </li>
-                  ))}
-                </ul>
-              )}
+            <li key={cultura.id}>
+              <Card>
+                <button
+                  onClick={() => alternarExpansao(cultura.id)}
+                  className="flex w-full items-center gap-2 px-4 py-3.5 text-left"
+                  aria-expanded={expandida}
+                >
+                  <IconChevronDown
+                    className={`h-5 w-5 shrink-0 text-ink-soft transition-transform ${expandida ? '' : '-rotate-90'}`}
+                  />
+                  <span className="min-w-0 flex-1 truncate font-display text-base font-bold text-ink">
+                    {cultura.nome} ({cultura.ciclo_dias} dias)
+                  </span>
+                </button>
+                {expandida && (
+                  <ul className="dashed-divider px-4 pb-3 pt-1">
+                    {cultura.fases.map((fase) => (
+                      <li
+                        key={fase.id}
+                        className="border-b border-dashed border-line py-2.5 font-display font-semibold text-ink last:border-0"
+                      >
+                        {fase.nome}: dia {fase.dia_inicio} a {fase.dia_fim}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
             </li>
           )
         })}

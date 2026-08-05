@@ -112,7 +112,7 @@ describe('DashboardPage', () => {
 
     renderComProvider()
 
-    expect((await screen.findByText(/Atrasada/)).className).toContain('text-red-600')
+    expect((await screen.findAllByText(/Atrasada/))[0].className).toContain('text-rust')
   })
 
   it('checkbox no painel marca tarefa como concluida', async () => {

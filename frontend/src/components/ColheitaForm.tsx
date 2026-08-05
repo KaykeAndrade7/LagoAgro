@@ -7,6 +7,7 @@ import { obterDataSeguraColheita } from '../api/plantios'
 import type { PlantioOpcao } from './AplicacaoInsumoForm'
 import type { ApiError } from '../lib/api-client'
 import { useMapeamentoErroFormulario } from '../lib/mutation-errors'
+import { Button, Field, FormError, Input, Select } from './ui'
 
 const schema = z.object({
   plantio: z.coerce.number().min(1, 'Selecione um plantio'),
@@ -77,57 +78,38 @@ export function ColheitaForm({ plantioOpcoes, colheita, erro, onSubmit, onCancel
   const mensagem = mensagemDataSegura()
 
   return (
-    <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-2">
-      {errors.root && <p className="text-sm text-red-600">{errors.root.message}</p>}
-      <div>
-        <label htmlFor="colheita-plantio" className="block text-sm">
-          Plantio
-        </label>
-        <select id="colheita-plantio" {...register('plantio')} className="border px-2 py-1">
+    <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-4">
+      <FormError>{errors.root?.message}</FormError>
+      <Field id="colheita-plantio" label="Plantio" error={errors.plantio?.message} hint={mensagem ?? undefined}>
+        <Select id="colheita-plantio" {...register('plantio')}>
           <option value={0}>Selecione...</option>
           {plantioOpcoes.map((opcao) => (
             <option key={opcao.id} value={opcao.id}>
               {opcao.label}
             </option>
           ))}
-        </select>
-        {errors.plantio && <p className="text-sm text-red-600">{errors.plantio.message}</p>}
-      </div>
-      {mensagem && <p className="text-sm text-gray-600">{mensagem}</p>}
-      <div>
-        <label htmlFor="colheita-data" className="block text-sm">
-          Data
-        </label>
-        <input id="colheita-data" type="date" {...register('data')} className="border px-2 py-1" />
-        {errors.data && <p className="text-sm text-red-600">{errors.data.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="colheita-classificacao" className="block text-sm">
-          Classificação
-        </label>
-        <select id="colheita-classificacao" {...register('classificacao')} className="border px-2 py-1">
+        </Select>
+      </Field>
+      <Field id="colheita-data" label="Data" error={errors.data?.message}>
+        <Input id="colheita-data" type="date" {...register('data')} />
+      </Field>
+      <Field id="colheita-classificacao" label="Classificação" error={errors.classificacao?.message}>
+        <Select id="colheita-classificacao" {...register('classificacao')}>
           {(Object.keys(ROTULOS_CLASSIFICACAO) as ClassificacaoColheita[]).map((classificacao) => (
             <option key={classificacao} value={classificacao}>
               {ROTULOS_CLASSIFICACAO[classificacao]}
             </option>
           ))}
-        </select>
-        {errors.classificacao && <p className="text-sm text-red-600">{errors.classificacao.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="colheita-quantidade" className="block text-sm">
-          Quantidade (caixas)
-        </label>
-        <input id="colheita-quantidade" {...register('quantidade')} className="border px-2 py-1" />
-        {errors.quantidade && <p className="text-sm text-red-600">{errors.quantidade.message}</p>}
-      </div>
-      <div className="flex gap-2">
-        <button type="submit" className="rounded bg-green-700 px-3 py-1 text-sm text-white">
-          Salvar
-        </button>
-        <button type="button" onClick={onCancel} className="rounded border px-3 py-1 text-sm">
+        </Select>
+      </Field>
+      <Field id="colheita-quantidade" label="Quantidade (caixas)" error={errors.quantidade?.message}>
+        <Input id="colheita-quantidade" inputMode="numeric" {...register('quantidade')} />
+      </Field>
+      <div className="flex gap-3">
+        <Button type="submit">Salvar</Button>
+        <Button type="button" variant="ghost" onClick={onCancel}>
           Cancelar
-        </button>
+        </Button>
       </div>
     </form>
   )

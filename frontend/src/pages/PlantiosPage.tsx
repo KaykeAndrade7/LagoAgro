@@ -8,13 +8,32 @@ import {
   ROTULOS_STATUS,
   type Plantio,
   type PlantioInput,
+  type PlantioStatus,
 } from '../api/plantios'
 import { listarTalhoes } from '../api/talhoes'
 import { listarCulturas } from '../api/culturas'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { PlantioForm } from '../components/PlantioForm'
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  IconPencil,
+  IconTrash,
+  LoadingState,
+  PageHeader,
+  type BadgeTone,
+} from '../components/ui'
 
 type FormularioAberto = { tipo: 'novo' } | { tipo: 'editar'; plantio: Plantio } | null
+
+const TOM_STATUS: Record<PlantioStatus, BadgeTone> = {
+  em_andamento: 'accent',
+  colhido: 'neutral',
+  cancelado: 'rust',
+}
 
 export function PlantiosPage() {
   const queryClient = useQueryClient()
@@ -50,16 +69,11 @@ export function PlantiosPage() {
   })
 
   if (plantiosQuery.isLoading || talhoesQuery.isLoading || culturasQuery.isLoading) {
-    return <p>Carregando...</p>
+    return <LoadingState />
   }
 
   if (plantiosQuery.isError) {
-    return (
-      <div>
-        <p>Nao foi possivel carregar os plantios.</p>
-        <button onClick={() => plantiosQuery.refetch()}>Tentar novamente</button>
-      </div>
-    )
+    return <ErrorState message="Não foi possível carregar os plantios." onRetry={() => plantiosQuery.refetch()} />
   }
 
   const plantios = plantiosQuery.data ?? []
@@ -75,48 +89,65 @@ export function PlantiosPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Plantios</h1>
-        <button
-          onClick={() => setFormulario({ tipo: 'novo' })}
-          className="rounded bg-green-700 px-3 py-1 text-sm text-white"
-        >
-          + Plantio
-        </button>
-      </div>
+      <PageHeader
+        title="Plantios"
+        action={
+          <Button size="sm" onClick={() => setFormulario({ tipo: 'novo' })}>
+            + Plantio
+          </Button>
+        }
+      />
 
       {formulario?.tipo === 'novo' && (
-        <PlantioForm
-          talhoes={talhoes}
-          culturas={culturas}
-          onSubmit={(input) => criarMutation.mutate(input)}
-          onCancel={() => setFormulario(null)}
-        />
+        <Card className="mb-5 p-5">
+          <PlantioForm
+            talhoes={talhoes}
+            culturas={culturas}
+            onSubmit={(input) => criarMutation.mutate(input)}
+            onCancel={() => setFormulario(null)}
+          />
+        </Card>
       )}
 
-      <ul>
+      {plantios.length === 0 && formulario?.tipo !== 'novo' && <EmptyState>Nenhum plantio registrado ainda.</EmptyState>}
+
+      <ul className="space-y-3">
         {plantios.map((plantio) =>
           formulario?.tipo === 'editar' && formulario.plantio.id === plantio.id ? (
-            <li key={plantio.id} className="mb-2 border p-2">
-              <PlantioForm
-                talhoes={talhoes}
-                culturas={culturas}
-                plantio={plantio}
-                onSubmit={(input) => atualizarMutation.mutate({ id: plantio.id, input })}
-                onCancel={() => setFormulario(null)}
-              />
+            <li key={plantio.id}>
+              <Card className="p-5">
+                <PlantioForm
+                  talhoes={talhoes}
+                  culturas={culturas}
+                  plantio={plantio}
+                  onSubmit={(input) => atualizarMutation.mutate({ id: plantio.id, input })}
+                  onCancel={() => setFormulario(null)}
+                />
+              </Card>
             </li>
           ) : (
-            <li key={plantio.id} className="mb-2 flex items-center justify-between border p-2">
-              <span>
-                {nomeCultura(plantio.cultura)} — {nomeTalhao(plantio.talhao)} —{' '}
-                {new Date(`${plantio.data_plantio}T00:00:00`).toLocaleDateString('pt-BR')} —{' '}
-                {ROTULOS_STATUS[plantio.status]}
-              </span>
-              <div className="flex gap-2 text-sm">
-                <button onClick={() => setFormulario({ tipo: 'editar', plantio })}>Editar</button>
-                <button onClick={() => setExclusaoPendente(plantio)}>Excluir</button>
-              </div>
+            <li key={plantio.id}>
+              <Card className="flex flex-col gap-2 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-display font-bold text-ink">
+                    {nomeCultura(plantio.cultura)} — {nomeTalhao(plantio.talhao)}
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-sm text-ink-soft">
+                      {new Date(`${plantio.data_plantio}T00:00:00`).toLocaleDateString('pt-BR')}
+                    </span>
+                    <Badge tone={TOM_STATUS[plantio.status]}>{ROTULOS_STATUS[plantio.status]}</Badge>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-1 sm:shrink-0">
+                  <Button variant="ghost" size="sm" onClick={() => setFormulario({ tipo: 'editar', plantio })}>
+                    <IconPencil className="h-4 w-4" /> Editar
+                  </Button>
+                  <Button variant="danger-ghost" size="sm" onClick={() => setExclusaoPendente(plantio)}>
+                    <IconTrash className="h-4 w-4" /> Excluir
+                  </Button>
+                </div>
+              </Card>
             </li>
           ),
         )}

@@ -174,7 +174,7 @@ describe('TarefasPage', () => {
 
     renderComProvider()
 
-    expect((await screen.findByText(/Atrasada/)).className).toContain('text-red-600')
+    expect((await screen.findAllByText(/Atrasada/))[0].className).toContain('text-rust')
   })
 
   it('editar uma tarefa concluida nao afeta seu estado de conclusao', async () => {
