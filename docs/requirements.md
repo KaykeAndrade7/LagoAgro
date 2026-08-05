@@ -33,7 +33,7 @@ Fornecer uma ferramenta simples que:
 | RF05 | Cadastrar produtos (defensivos/adubos) uma única vez em catálogo reutilizável |
 | RF06 | Registrar aplicação de insumo: produto do catálogo + quantidade usada + data (registro manual, sem cálculo automático de dosagem) |
 | RF07 | Calcular data segura de colheita (última aplicação + carência do produto) |
-| RF08 | Registrar lançamentos financeiros (gasto) por plantio, classificado por setor (mão de obra, insumos, maquinário/equipamentos, transporte/frete, manutenção/infraestrutura, outros) |
+| RF08 | Registrar lançamentos financeiros por plantio, dos tipos gasto e ganho, classificados por setor (gasto: mão de obra, insumos, maquinário/equipamentos, transporte/frete, manutenção/infraestrutura, outros; ganho: venda de colheita, outros) |
 | RF09 | Registrar resultado da colheita por classificação (ex.: caixas de primeira, caixas de segunda) |
 | RF10 | Criar tarefas manuais vinculadas a um plantio, com data definida pelo usuário |
 | RF11 | Notificar o usuário no dia da tarefa (prioridade: aplicação de defensivo) |
@@ -101,3 +101,12 @@ Fornecer uma ferramenta simples que:
   transporte/frete, manutenção/infraestrutura e outros. Lista genérica,
   pensada para cobrir os gastos de uma pequena propriedade sem precisar de um
   catálogo configurável à parte.
+
+### Nova ideia do usuário — 2026-08-05
+
+- **Adicionado**: lançamentos financeiros (RF08) passam a ter um `tipo`
+  (gasto ou ganho), não só gasto. Ganho ganha sua própria lista de setores,
+  com destaque para venda de colheita (mais um "outros" genérico).
+- **Adicionado**: tela Financeiro passa a mostrar total de gasto, total de
+  ganho e saldo líquido, com filtro pra ver só gastos, só ganhos ou todos —
+  o usuário queria enxergar não só quanto gastou, mas também quanto entrou.
