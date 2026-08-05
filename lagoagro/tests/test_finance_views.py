@@ -23,7 +23,7 @@ def test_criar_lancamento_com_plantio_proprio_funciona(criar_usuario_autenticado
     plantio = _criar_plantio(usuario)
 
     response = client.post("/api/lancamentos-financeiros/", {
-        "plantio": plantio.id, "valor": "150.00", "data": "2026-01-15", "descricao": "Compra de mudas", "setor": "insumos",
+        "plantio": plantio.id, "tipo": "gasto", "valor": "150.00", "data": "2026-01-15", "descricao": "Compra de mudas", "setor": "insumos",
     })
 
     assert response.status_code == 201
@@ -35,7 +35,7 @@ def test_criar_lancamento_com_plantio_de_outro_usuario_retorna_400(criar_usuario
     plantio_outro = _criar_plantio(outro)
 
     response = client.post("/api/lancamentos-financeiros/", {
-        "plantio": plantio_outro.id, "valor": "150.00", "data": "2026-01-15", "descricao": "Compra de mudas", "setor": "insumos",
+        "plantio": plantio_outro.id, "tipo": "gasto", "valor": "150.00", "data": "2026-01-15", "descricao": "Compra de mudas", "setor": "insumos",
     })
 
     assert response.status_code == 400
@@ -64,6 +64,43 @@ def test_acessar_lancamento_de_outro_usuario_retorna_404(criar_usuario_autentica
     response = client.get(f"/api/lancamentos-financeiros/{lancamento_outro.id}/")
 
     assert response.status_code == 404
+
+
+def test_criar_lancamento_gasto_com_setor_de_ganho_retorna_400(criar_usuario_autenticado):
+    usuario, client = criar_usuario_autenticado()
+    plantio = _criar_plantio(usuario)
+
+    response = client.post("/api/lancamentos-financeiros/", {
+        "plantio": plantio.id, "tipo": "gasto", "valor": "150.00", "data": "2026-01-15",
+        "descricao": "Venda equivocada", "setor": "venda_colheita",
+    })
+
+    assert response.status_code == 400
+
+
+def test_criar_lancamento_ganho_com_setor_de_gasto_retorna_400(criar_usuario_autenticado):
+    usuario, client = criar_usuario_autenticado()
+    plantio = _criar_plantio(usuario)
+
+    response = client.post("/api/lancamentos-financeiros/", {
+        "plantio": plantio.id, "tipo": "ganho", "valor": "500.00", "data": "2026-01-15",
+        "descricao": "Venda de tomate", "setor": "insumos",
+    })
+
+    assert response.status_code == 400
+
+
+def test_criar_lancamento_ganho_com_setor_venda_colheita_funciona(criar_usuario_autenticado):
+    usuario, client = criar_usuario_autenticado()
+    plantio = _criar_plantio(usuario)
+
+    response = client.post("/api/lancamentos-financeiros/", {
+        "plantio": plantio.id, "tipo": "ganho", "valor": "500.00", "data": "2026-01-15",
+        "descricao": "Venda de tomate", "setor": "venda_colheita",
+    })
+
+    assert response.status_code == 201
+    assert response.data["tipo"] == "ganho"
 
 
 # --- Trabalhador ---

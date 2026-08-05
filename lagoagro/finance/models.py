@@ -44,20 +44,32 @@ class Diaria(models.Model):
 
 
 class LancamentoFinanceiro(models.Model):
-    # Lista generica de setores de gasto (aprovada com o usuario) - cobre mao de
-    # obra separadamente dos demais custos, sem precisar de um catalogo a parte.
+    TIPO_CHOICES = [
+        ("gasto", "Gasto"),
+        ("ganho", "Ganho"),
+    ]
+
+    # Lista generica de setores (aprovada com o usuario) - cobre mao de obra
+    # separadamente dos demais custos, sem precisar de um catalogo a parte.
+    # "venda_colheita" e "outros" tambem servem pra tipo="ganho" - ver
+    # GASTO_SETORES/GANHO_SETORES abaixo pra quais sao validos em cada tipo.
     SETOR_CHOICES = [
         ("mao_de_obra", "Mão de obra"),
         ("insumos", "Insumos"),
         ("maquinario", "Maquinário/equipamentos"),
         ("transporte", "Transporte/frete"),
         ("manutencao", "Manutenção/infraestrutura"),
+        ("venda_colheita", "Venda de colheita"),
         ("outros", "Outros"),
     ]
+
+    GASTO_SETORES = {"mao_de_obra", "insumos", "maquinario", "transporte", "manutencao", "outros"}
+    GANHO_SETORES = {"venda_colheita", "outros"}
 
     # plantio e PROTECT (ADR 008): lancamento e trilha financeira e nao pode
     # sumir junto com o plantio (usar Plantio.status="cancelado" em vez de deletar).
     plantio = models.ForeignKey("plantings.Plantio", on_delete=models.PROTECT, related_name="lancamentos")
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default="gasto")
     valor = models.DecimalField(max_digits=10, decimal_places=2)
     data = models.DateField()
     descricao = models.CharField(max_length=255)

@@ -14,7 +14,24 @@ class LancamentoFinanceiroSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LancamentoFinanceiro
-        fields = ["id", "plantio", "valor", "data", "descricao", "setor"]
+        fields = ["id", "plantio", "tipo", "valor", "data", "descricao", "setor"]
+        extra_kwargs = {"tipo": {"required": True}}
+
+    def validate(self, attrs):
+        # PATCH parcial pode nao mandar tipo/setor - cai no valor atual da
+        # instancia. Create sempre manda os dois (tipo e obrigatorio, setor
+        # ja era obrigatorio antes desta mudanca).
+        if self.instance is not None:
+            tipo = attrs.get("tipo", self.instance.tipo)
+            setor = attrs.get("setor", self.instance.setor)
+        else:
+            tipo = attrs.get("tipo", "gasto")
+            setor = attrs.get("setor")
+
+        setores_validos = LancamentoFinanceiro.GANHO_SETORES if tipo == "ganho" else LancamentoFinanceiro.GASTO_SETORES
+        if setor is not None and setor not in setores_validos:
+            raise serializers.ValidationError(f"Setor '{setor}' não é válido para o tipo '{tipo}'.")
+        return attrs
 
 
 class TrabalhadorSerializer(serializers.ModelSerializer):
