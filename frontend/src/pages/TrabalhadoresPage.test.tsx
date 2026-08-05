@@ -122,6 +122,7 @@ describe('TrabalhadoresPage', () => {
       {
         id: 9,
         plantio: 1,
+        tipo: 'gasto',
         valor: '120.00',
         data: '2026-08-05',
         descricao: 'Pagamento de diarias',

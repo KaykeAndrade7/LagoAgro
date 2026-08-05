@@ -40,8 +40,8 @@ describe('FinanceiroPage', () => {
 
   it('lista carrega e mostra o total geral', async () => {
     vi.mocked(lancamentosApi.listarLancamentos).mockResolvedValue([
-      { id: 1, plantio: 1, valor: '150.00', data: '2026-08-05', descricao: 'Compra de mudas', setor: 'insumos' },
-      { id: 2, plantio: 1, valor: '50.00', data: '2026-08-06', descricao: 'Frete', setor: 'transporte' },
+      { id: 1, plantio: 1, tipo: 'gasto', valor: '150.00', data: '2026-08-05', descricao: 'Compra de mudas', setor: 'insumos' },
+      { id: 2, plantio: 1, tipo: 'gasto', valor: '50.00', data: '2026-08-06', descricao: 'Frete', setor: 'transporte' },
     ])
 
     renderComProvider()
@@ -54,11 +54,12 @@ describe('FinanceiroPage', () => {
     vi.mocked(lancamentosApi.listarLancamentos)
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
-        { id: 1, plantio: 1, valor: '150.00', data: '2026-08-05', descricao: 'Compra de mudas', setor: 'insumos' },
+        { id: 1, plantio: 1, tipo: 'gasto', valor: '150.00', data: '2026-08-05', descricao: 'Compra de mudas', setor: 'insumos' },
       ])
     vi.mocked(lancamentosApi.criarLancamento).mockResolvedValue({
       id: 1,
       plantio: 1,
+      tipo: 'gasto',
       valor: '150.00',
       data: '2026-08-05',
       descricao: 'Compra de mudas',
@@ -78,7 +79,7 @@ describe('FinanceiroPage', () => {
 
   it('excluir lancamento sem diarias vinculadas nao mostra aviso de uso', async () => {
     vi.mocked(lancamentosApi.listarLancamentos).mockResolvedValue([
-      { id: 1, plantio: 1, valor: '150.00', data: '2026-08-05', descricao: 'Compra de mudas', setor: 'insumos' },
+      { id: 1, plantio: 1, tipo: 'gasto', valor: '150.00', data: '2026-08-05', descricao: 'Compra de mudas', setor: 'insumos' },
     ])
 
     renderComProvider()
@@ -90,7 +91,7 @@ describe('FinanceiroPage', () => {
 
   it('excluir lancamento com diarias vinculadas mostra a contagem no dialogo', async () => {
     vi.mocked(lancamentosApi.listarLancamentos).mockResolvedValue([
-      { id: 1, plantio: 1, valor: '120.00', data: '2026-08-05', descricao: 'Pagamento de diarias', setor: 'mao_de_obra' },
+      { id: 1, plantio: 1, tipo: 'gasto', valor: '120.00', data: '2026-08-05', descricao: 'Pagamento de diarias', setor: 'mao_de_obra' },
     ])
     vi.mocked(diariasApi.listarDiarias).mockResolvedValue([
       { id: 1, trabalhador: 1, plantio: 1, data: '2026-08-01', valor: '120.00', lancamento: 1 },
@@ -107,7 +108,7 @@ describe('FinanceiroPage', () => {
 
   it('erro 409 simulado do backend aparece como mensagem no dialogo sem fecha-lo', async () => {
     vi.mocked(lancamentosApi.listarLancamentos).mockResolvedValue([
-      { id: 1, plantio: 1, valor: '150.00', data: '2026-08-05', descricao: 'Compra de mudas', setor: 'insumos' },
+      { id: 1, plantio: 1, tipo: 'gasto', valor: '150.00', data: '2026-08-05', descricao: 'Compra de mudas', setor: 'insumos' },
     ])
     vi.mocked(lancamentosApi.excluirLancamento).mockRejectedValue(
       new ApiError(409, 'Nao e possivel excluir: existem registros vinculados a este item.', {

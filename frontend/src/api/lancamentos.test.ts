@@ -9,6 +9,7 @@ describe('api/lancamentos', () => {
   const lancamento = {
     id: 1,
     plantio: 1,
+    tipo: 'gasto' as const,
     valor: '150.00',
     data: '2026-08-05',
     descricao: 'Compra de mudas',
@@ -33,6 +34,7 @@ describe('api/lancamentos', () => {
 
     const input = {
       plantio: 1,
+      tipo: 'gasto' as const,
       valor: '150.00',
       data: '2026-08-05',
       descricao: 'Compra de mudas',
@@ -53,6 +55,7 @@ describe('api/lancamentos', () => {
 
     const input = {
       plantio: 1,
+      tipo: 'gasto' as const,
       valor: '200.00',
       data: '2026-08-06',
       descricao: 'Compra de adubo',
