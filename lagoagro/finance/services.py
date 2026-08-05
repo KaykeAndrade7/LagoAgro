@@ -30,6 +30,7 @@ def pagar_diarias_pendentes(trabalhador):
 
         lancamento = LancamentoFinanceiro.objects.create(
             plantio_id=plantio_id,
+            tipo="gasto",
             valor=agregado["total"],
             data=timezone.localdate(),
             descricao=(

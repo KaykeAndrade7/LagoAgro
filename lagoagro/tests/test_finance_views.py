@@ -219,6 +219,7 @@ def test_pagar_diarias_pendentes_via_action_cria_lancamento(criar_usuario_autent
     assert response.status_code == 200
     assert len(response.data) == 1
     assert response.data[0]["valor"] == "240.00"
+    assert response.data[0]["tipo"] == "gasto"
     assert LancamentoFinanceiro.objects.count() == 1
 
 
