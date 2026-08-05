@@ -45,6 +45,9 @@ export const ROTULOS_SETOR: Record<SetorLancamento, string> = {
   outros: 'Outros',
 }
 
+// Mantenha em sincronia com GASTO_SETORES/GANHO_SETORES em
+// lagoagro/finance/models.py — o backend rejeita com 400 qualquer
+// combinação tipo×setor que não bata com essas listas.
 export const SETORES_POR_TIPO: Record<TipoLancamento, SetorLancamento[]> = {
   gasto: ['mao_de_obra', 'insumos', 'maquinario', 'transporte', 'manutencao', 'outros'],
   ganho: ['venda_colheita', 'outros'],
