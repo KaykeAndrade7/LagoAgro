@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,7 +8,6 @@ import {
   SETORES_POR_TIPO,
   type LancamentoFinanceiro,
   type LancamentoFinanceiroInput,
-  type SetorLancamento,
   type TipoLancamento,
 } from '../api/lancamentos'
 import type { PlantioOpcao } from './AplicacaoInsumoForm'
@@ -65,18 +64,25 @@ export function LancamentoForm({ plantioOpcoes, lancamento, erro, onSubmit, onCa
 
   const tipoValue = watch('tipo')
   const tipoSelecionado: TipoLancamento = (tipoValue === 'ganho' ? 'ganho' : 'gasto')
-  const setorSelecionado = (watch('setor') ?? 'outros') as SetorLancamento
   const setoresValidos = SETORES_POR_TIPO[tipoSelecionado]
 
-  // Trocar de tipo com uma categoria que nao existe mais no novo tipo
-  // (ex.: "Insumos" ao trocar de Gasto pra Ganho) reseta pro primeiro
-  // setor valido do tipo novo - evita submeter uma combinacao invalida
-  // por inercia da UI (o backend rejeitaria com 400 de qualquer forma).
+  // Guarda o tipo do render anterior pra distinguir "tipo mudou porque o
+  // usuario trocou o select" de "tipo veio assim no mount via defaultValues"
+  // (ex.: abrindo o formulario de edicao com tipo=ganho). So reseta o setor
+  // no primeiro caso - no segundo, o setor carregado do lancamento existente
+  // deve ser preservado tal como esta salvo.
+  const tipoAnteriorRef = useRef(tipoSelecionado)
+
+  // Trocar de tipo (pela mao do usuario) sempre reseta pro primeiro setor
+  // valido do tipo novo - inclusive quando o setor atual "outros" ja seria
+  // tecnicamente valido nos dois tipos, pra Venda de colheita nao exigir um
+  // clique extra so porque coincide de outros ser valido nos dois.
   useEffect(() => {
-    if (!setoresValidos.includes(setorSelecionado)) {
+    if (tipoAnteriorRef.current !== tipoSelecionado) {
+      tipoAnteriorRef.current = tipoSelecionado
       setValue('setor', setoresValidos[0])
     }
-  }, [tipoSelecionado, setorSelecionado, setoresValidos, setValue])
+  }, [tipoSelecionado, setoresValidos, setValue])
 
   return (
     <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-4">

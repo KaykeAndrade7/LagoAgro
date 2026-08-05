@@ -64,6 +64,10 @@ export function FinanceiroPage() {
       queryClient.invalidateQueries({ queryKey: ['lancamentos'] })
       setErroFormulario(null)
       setFormulario(null)
+      // Se um filtro (Gastos/Ganhos) estava ativo, o lancamento recem-criado
+      // pode nao bater com ele - volta pra "Todos" pra garantir que o
+      // usuario sempre veja o que acabou de registrar.
+      setFiltro('todos')
     },
     onError: (erro) => setErroFormulario(paraApiError(erro)),
   })
@@ -139,7 +143,11 @@ export function FinanceiroPage() {
   // exibicao ativo abaixo - trocar o filtro muda só a lista, nunca os totais.
   const totalGasto = lancamentos.filter((l) => l.tipo === 'gasto').reduce((soma, l) => soma + Number(l.valor), 0)
   const totalGanho = lancamentos.filter((l) => l.tipo === 'ganho').reduce((soma, l) => soma + Number(l.valor), 0)
-  const saldoLiquido = totalGanho - totalGasto
+  const saldoBruto = totalGanho - totalGasto
+  // Duas somas de ponto flutuante matematicamente iguais podem cancelar pra
+  // algo como -0.00000000001 em vez de 0 - sem essa guarda, o saldo
+  // renderizaria como "R$ -0.00", que parece negativo mas nao é.
+  const saldoLiquido = Math.abs(saldoBruto) < 0.005 ? 0 : saldoBruto
 
   const lancamentosOrdenados = [...lancamentos].sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0))
   const lancamentosFiltrados =
@@ -196,7 +204,9 @@ export function FinanceiroPage() {
         </Card>
       )}
 
-      {lancamentosFiltrados.length === 0 && formulario?.tipo !== 'novo' && <EmptyState>Nenhum lançamento registrado ainda.</EmptyState>}
+      {lancamentosFiltrados.length === 0 && formulario?.tipo !== 'novo' && (
+        <EmptyState>{filtro !== 'todos' ? 'Nenhum lançamento deste tipo.' : 'Nenhum lançamento registrado ainda.'}</EmptyState>
+      )}
 
       <ul className="space-y-3">
         {lancamentosFiltrados.map((lancamento) =>

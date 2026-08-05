@@ -72,17 +72,32 @@ describe('FinanceiroPage', () => {
     await screen.findByText(/Compra de mudas/)
     expect(screen.getByText(/Venda tomate/)).toBeInTheDocument()
 
+    // Os totais (gasto 150, ganho 400, saldo 250) nunca devem mudar com o
+    // filtro - so a lista de lancamentos visiveis muda.
+    expect(screen.getByText('R$ 150.00')).toBeInTheDocument()
+    expect(screen.getByText('R$ 400.00')).toBeInTheDocument()
+    expect(screen.getByText('R$ 250.00')).toBeInTheDocument()
+
     await userEvent.click(screen.getByText('Gastos'))
     expect(screen.getByText(/Compra de mudas/)).toBeInTheDocument()
     expect(screen.queryByText(/Venda tomate/)).not.toBeInTheDocument()
+    expect(screen.getByText('R$ 150.00')).toBeInTheDocument()
+    expect(screen.getByText('R$ 400.00')).toBeInTheDocument()
+    expect(screen.getByText('R$ 250.00')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('Ganhos'))
     expect(screen.queryByText(/Compra de mudas/)).not.toBeInTheDocument()
     expect(screen.getByText(/Venda tomate/)).toBeInTheDocument()
+    expect(screen.getByText('R$ 150.00')).toBeInTheDocument()
+    expect(screen.getByText('R$ 400.00')).toBeInTheDocument()
+    expect(screen.getByText('R$ 250.00')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('Todos'))
     expect(screen.getByText(/Compra de mudas/)).toBeInTheDocument()
     expect(screen.getByText(/Venda tomate/)).toBeInTheDocument()
+    expect(screen.getByText('R$ 150.00')).toBeInTheDocument()
+    expect(screen.getByText('R$ 400.00')).toBeInTheDocument()
+    expect(screen.getByText('R$ 250.00')).toBeInTheDocument()
   })
 
   it('criar lancamento via formulario adiciona o item a lista', async () => {
