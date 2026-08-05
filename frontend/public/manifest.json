@@ -2,6 +2,7 @@
   "name": "LagoAgro",
   "short_name": "LagoAgro",
   "description": "Gestão agrícola para pequeno produtor",
+  "id": "/",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
