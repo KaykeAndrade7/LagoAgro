@@ -1,3 +1,8 @@
+// Em dev, vazio (o proxy do Vite cuida de /api -> localhost:8000). Em
+// producao, a Vercel nao tem esse proxy, entao o build injeta a URL real do
+// backend no Render via VITE_API_BASE_URL (ver .env.production.example).
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
+
 let accessToken: string | null = null
 
 export function setAccessToken(token: string | null): void {
@@ -34,7 +39,7 @@ async function rawFetch(path: string, options: ApiRequestOptions): Promise<Respo
   if (accessToken) {
     headers.set('Authorization', `Bearer ${accessToken}`)
   }
-  return fetch(`/api${path}`, {
+  return fetch(`${API_BASE_URL}/api${path}`, {
     method: options.method ?? 'GET',
     headers,
     credentials: 'include',
@@ -66,7 +71,7 @@ export function refreshAccessToken(): Promise<string> {
     return refreshInFlight
   }
   refreshInFlight = (async () => {
-    const response = await fetch('/api/auth/refresh/', { method: 'POST', credentials: 'include' })
+    const response = await fetch(`${API_BASE_URL}/api/auth/refresh/`, { method: 'POST', credentials: 'include' })
     if (!response.ok) {
       onAuthExpired?.()
       throw new AuthExpiredError()

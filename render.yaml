@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: lagoagro-backend
+    runtime: python
+    rootDir: lagoagro
+    plan: free
+    buildCommand: pip install --upgrade uv && uv sync --frozen --no-dev && uv run python manage.py collectstatic --noinput && uv run python manage.py migrate
+    startCommand: uv run gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --workers 2
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: REFRESH_COOKIE_SECURE
+        value: "True"
+      - key: REFRESH_COOKIE_SAMESITE
+        value: "None"
+      # Preenchidos manualmente no painel do Render (dependem de servicos
+      # externos ou so sao conhecidos depois do primeiro deploy):
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
