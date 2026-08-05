@@ -20,6 +20,17 @@ import { listarPlantios } from '../api/plantios'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { PropriedadeForm } from '../components/PropriedadeForm'
 import { TalhaoForm } from '../components/TalhaoForm'
+import {
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  IconChevronDown,
+  IconPencil,
+  IconTrash,
+  LoadingState,
+  PageHeader,
+} from '../components/ui'
 
 type FormularioAberto =
   | { tipo: 'nova-propriedade' }
@@ -104,25 +115,15 @@ export function PropriedadesPage() {
   }
 
   if (propriedadesQuery.isLoading || talhoesQuery.isLoading) {
-    return <p>Carregando...</p>
+    return <LoadingState />
   }
 
   if (propriedadesQuery.isError) {
-    return (
-      <div>
-        <p>Nao foi possivel carregar as propriedades.</p>
-        <button onClick={() => propriedadesQuery.refetch()}>Tentar novamente</button>
-      </div>
-    )
+    return <ErrorState message="Não foi possível carregar as propriedades." onRetry={() => propriedadesQuery.refetch()} />
   }
 
   if (talhoesQuery.isError) {
-    return (
-      <div>
-        <p>Nao foi possivel carregar os talhoes.</p>
-        <button onClick={() => talhoesQuery.refetch()}>Tentar novamente</button>
-      </div>
-    )
+    return <ErrorState message="Não foi possível carregar os talhões." onRetry={() => talhoesQuery.refetch()} />
   }
 
   const propriedades = propriedadesQuery.data ?? []
@@ -143,100 +144,146 @@ export function PropriedadesPage() {
       const n = plantios.filter((p) => p.talhao === exclusaoPendente.talhao.id).length
       return n > 0
         ? `Isso tambem excluira ${n} plantio(s) registrado(s) neste talhao.`
-        : 'Tem certeza que deseja excluir este talhao?'
+        : 'Tem certeza que deseja excluir este talhão?'
     }
     return ''
   }
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Propriedades</h1>
-        <button
-          onClick={() => setFormulario({ tipo: 'nova-propriedade' })}
-          className="rounded bg-green-700 px-3 py-1 text-sm text-white"
-        >
-          + Propriedade
-        </button>
-      </div>
+      <PageHeader
+        title="Propriedades"
+        action={
+          <Button size="sm" onClick={() => setFormulario({ tipo: 'nova-propriedade' })}>
+            + Propriedade
+          </Button>
+        }
+      />
 
       {formulario?.tipo === 'nova-propriedade' && (
-        <PropriedadeForm
-          onSubmit={(input) => criarPropriedadeMutation.mutate(input)}
-          onCancel={() => setFormulario(null)}
-        />
-      )}
-      {formulario?.tipo === 'editar-propriedade' && (
-        <PropriedadeForm
-          key={formulario.propriedade.id}
-          propriedade={formulario.propriedade}
-          onSubmit={(input) => atualizarPropriedadeMutation.mutate({ id: formulario.propriedade.id, input })}
-          onCancel={() => setFormulario(null)}
-        />
+        <Card className="mb-5 p-5">
+          <PropriedadeForm
+            onSubmit={(input) => criarPropriedadeMutation.mutate(input)}
+            onCancel={() => setFormulario(null)}
+          />
+        </Card>
       )}
 
-      <ul>
+      {propriedades.length === 0 && formulario?.tipo !== 'nova-propriedade' && (
+        <EmptyState>Nenhuma propriedade cadastrada ainda.</EmptyState>
+      )}
+
+      <ul className="space-y-3">
         {propriedades.map((propriedade) => {
           const talhoesDaPropriedade = talhoes.filter((talhao) => talhao.propriedade === propriedade.id)
           const expandida = expandidas.has(propriedade.id)
 
-          return (
-            <li key={propriedade.id} className="mb-2 border p-2">
-              <div className="flex items-center justify-between">
-                <button onClick={() => alternarExpansao(propriedade.id)} className="text-left font-semibold">
-                  {expandida ? '▾' : '▸'} {propriedade.nome}
-                </button>
-                <div className="flex gap-2 text-sm">
-                  <button onClick={() => setFormulario({ tipo: 'editar-propriedade', propriedade })}>Editar</button>
-                  <button onClick={() => setExclusaoPendente({ tipo: 'propriedade', propriedade })}>Excluir</button>
-                </div>
-              </div>
+          if (formulario?.tipo === 'editar-propriedade' && formulario.propriedade.id === propriedade.id) {
+            return (
+              <li key={propriedade.id}>
+                <Card className="p-5">
+                  <PropriedadeForm
+                    propriedade={formulario.propriedade}
+                    onSubmit={(input) => atualizarPropriedadeMutation.mutate({ id: propriedade.id, input })}
+                    onCancel={() => setFormulario(null)}
+                  />
+                </Card>
+              </li>
+            )
+          }
 
-              {expandida && (
-                <div className="ml-4 mt-2">
-                  {formulario?.tipo === 'novo-talhao' && formulario.propriedadeId === propriedade.id && (
-                    <TalhaoForm
-                      propriedadeId={propriedade.id}
-                      onSubmit={(input) => criarTalhaoMutation.mutate(input)}
-                      onCancel={() => setFormulario(null)}
-                    />
-                  )}
-                  <ul>
-                    {talhoesDaPropriedade.map((talhao) => (
-                      <li key={talhao.id} className="mb-1 flex items-center justify-between">
-                        {formulario?.tipo === 'editar-talhao' && formulario.talhao.id === talhao.id ? (
-                          <TalhaoForm
-                            propriedadeId={propriedade.id}
-                            talhao={talhao}
-                            onSubmit={(input) => atualizarTalhaoMutation.mutate({ id: talhao.id, input })}
-                            onCancel={() => setFormulario(null)}
-                          />
-                        ) : (
-                          <>
-                            <span>
-                              {talhao.nome} — {talhao.area} ha ({talhao.tipo_solo})
-                            </span>
-                            <div className="flex gap-2 text-sm">
-                              <button onClick={() => setFormulario({ tipo: 'editar-talhao', talhao })}>
-                                Editar
-                              </button>
-                              <button onClick={() => setExclusaoPendente({ tipo: 'talhao', talhao })}>
-                                Excluir
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
+          return (
+            <li key={propriedade.id}>
+              <Card>
+                <div className="flex items-center justify-between gap-2 px-4 py-3.5">
                   <button
-                    onClick={() => setFormulario({ tipo: 'novo-talhao', propriedadeId: propriedade.id })}
-                    className="mt-1 text-sm"
+                    onClick={() => alternarExpansao(propriedade.id)}
+                    className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                    aria-expanded={expandida}
                   >
-                    + Talhao
+                    <IconChevronDown
+                      className={`h-5 w-5 shrink-0 text-ink-soft transition-transform ${expandida ? '' : '-rotate-90'}`}
+                    />
+                    <span className="truncate font-display text-base font-bold text-ink">{propriedade.nome}</span>
                   </button>
+                  <div className="flex shrink-0 gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFormulario({ tipo: 'editar-propriedade', propriedade })}
+                    >
+                      <IconPencil className="h-4 w-4" /> Editar
+                    </Button>
+                    <Button
+                      variant="danger-ghost"
+                      size="sm"
+                      onClick={() => setExclusaoPendente({ tipo: 'propriedade', propriedade })}
+                    >
+                      <IconTrash className="h-4 w-4" /> Excluir
+                    </Button>
+                  </div>
                 </div>
-              )}
+
+                {expandida && (
+                  <div className="dashed-divider px-4 pb-4 pt-3">
+                    {formulario?.tipo === 'novo-talhao' && formulario.propriedadeId === propriedade.id && (
+                      <TalhaoForm
+                        propriedadeId={propriedade.id}
+                        onSubmit={(input) => criarTalhaoMutation.mutate(input)}
+                        onCancel={() => setFormulario(null)}
+                      />
+                    )}
+                    <ul className="space-y-1">
+                      {talhoesDaPropriedade.map((talhao) =>
+                        formulario?.tipo === 'editar-talhao' && formulario.talhao.id === talhao.id ? (
+                          <li key={talhao.id}>
+                            <TalhaoForm
+                              propriedadeId={propriedade.id}
+                              talhao={talhao}
+                              onSubmit={(input) => atualizarTalhaoMutation.mutate({ id: talhao.id, input })}
+                              onCancel={() => setFormulario(null)}
+                            />
+                          </li>
+                        ) : (
+                          <li
+                            key={talhao.id}
+                            className="flex items-center justify-between gap-2 border-b border-dashed border-line py-2.5 last:border-0"
+                          >
+                            <span className="min-w-0 truncate font-display font-semibold text-ink">
+                              {talhao.nome}
+                              <span className="font-mono font-normal text-ink-soft"> · {talhao.area} ha · {talhao.tipo_solo}</span>
+                            </span>
+                            <div className="flex shrink-0 gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setFormulario({ tipo: 'editar-talhao', talhao })}
+                              >
+                                <IconPencil className="h-4 w-4" /> Editar
+                              </Button>
+                              <Button
+                                variant="danger-ghost"
+                                size="sm"
+                                onClick={() => setExclusaoPendente({ tipo: 'talhao', talhao })}
+                              >
+                                <IconTrash className="h-4 w-4" /> Excluir
+                              </Button>
+                            </div>
+                          </li>
+                        ),
+                      )}
+                    </ul>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-2 px-0"
+                      onClick={() => setFormulario({ tipo: 'novo-talhao', propriedadeId: propriedade.id })}
+                    >
+                      + Talhão
+                    </Button>
+                  </div>
+                )}
+              </Card>
             </li>
           )
         })}
@@ -244,7 +291,7 @@ export function PropriedadesPage() {
 
       <ConfirmDialog
         aberto={exclusaoPendente !== null}
-        titulo={exclusaoPendente?.tipo === 'propriedade' ? 'Excluir propriedade' : 'Excluir talhao'}
+        titulo={exclusaoPendente?.tipo === 'propriedade' ? 'Excluir propriedade' : 'Excluir talhão'}
         mensagem={mensagemExclusao()}
         onConfirm={() => {
           if (exclusaoPendente?.tipo === 'propriedade') {

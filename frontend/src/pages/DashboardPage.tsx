@@ -7,6 +7,7 @@ import { listarTalhoes } from '../api/talhoes'
 import { paraApiError } from '../lib/api-client'
 import { hojeISO, estaAtrasada } from '../lib/datas'
 import { TarefaItem } from '../components/TarefaItem'
+import { Card, EmptyState, ErrorState, LoadingState, PageHeader } from '../components/ui'
 
 export function DashboardPage() {
   const { usuario } = useAuth()
@@ -27,23 +28,19 @@ export function DashboardPage() {
   })
 
   if (tarefasQuery.isLoading || plantiosQuery.isLoading || talhoesQuery.isLoading) {
-    return <p>Carregando...</p>
+    return <LoadingState />
   }
 
   if (tarefasQuery.isError || plantiosQuery.isError || talhoesQuery.isError) {
     return (
-      <div>
-        <p>Nao foi possivel carregar o painel.</p>
-        <button
-          onClick={() => {
-            tarefasQuery.refetch()
-            plantiosQuery.refetch()
-            talhoesQuery.refetch()
-          }}
-        >
-          Tentar novamente
-        </button>
-      </div>
+      <ErrorState
+        message="Não foi possível carregar o painel."
+        onRetry={() => {
+          tarefasQuery.refetch()
+          plantiosQuery.refetch()
+          talhoesQuery.refetch()
+        }}
+      />
     )
   }
 
@@ -70,36 +67,43 @@ export function DashboardPage() {
 
   return (
     <div>
-      <p className="mb-4">Bem-vindo, {usuario?.username}</p>
+      <PageHeader title="Painel" />
+      <p className="-mt-3 mb-6 font-display font-semibold text-ink-soft">Bem-vindo, {usuario?.username}</p>
 
-      {erroConclusao && <p className="mb-2 text-sm text-red-600">{erroConclusao}</p>}
+      {erroConclusao && (
+        <p role="alert" className="mb-4 rounded-md border-2 border-rust/30 bg-rust-bg px-3 py-2 text-sm font-bold text-rust">
+          {erroConclusao}
+        </p>
+      )}
 
-      {talhoesOrdenados.length === 0 && <p>Nenhuma tarefa pendente.</p>}
+      {talhoesOrdenados.length === 0 && <EmptyState>Nenhuma tarefa pendente.</EmptyState>}
 
-      {talhoesOrdenados.map((nomeTalhao) => {
-        const tarefasDoTalhao = [...(gruposPorTalhao.get(nomeTalhao) ?? [])].sort((a, b) =>
-          a.data < b.data ? -1 : a.data > b.data ? 1 : 0,
-        )
-        return (
-          <div key={nomeTalhao} className="mb-4">
-            <h2 className="mb-2 font-bold">{nomeTalhao}</h2>
-            <ul>
-              {tarefasDoTalhao.map((tarefa) => (
-                <li key={tarefa.id} className="mb-1">
+      <div className="space-y-5">
+        {talhoesOrdenados.map((nomeTalhao) => {
+          const tarefasDoTalhao = [...(gruposPorTalhao.get(nomeTalhao) ?? [])].sort((a, b) =>
+            a.data < b.data ? -1 : a.data > b.data ? 1 : 0,
+          )
+          return (
+            <Card key={nomeTalhao} className="ticket-paper px-5 pt-4 pb-1 pl-9">
+              <h2 className="mb-1 font-display text-lg font-black uppercase tracking-tight text-ink">{nomeTalhao}</h2>
+              <div>
+                {tarefasDoTalhao.map((tarefa) => (
                   <TarefaItem
+                    key={tarefa.id}
                     tarefa={tarefa}
                     atrasada={estaAtrasada(tarefa, hoje)}
+                    hoje={tarefa.data === hoje}
                     onToggleConcluida={(concluida) => {
                       setErroConclusao(null)
                       concluirMutation.mutate({ id: tarefa.id, concluida })
                     }}
                   />
-                </li>
-              ))}
-            </ul>
-          </div>
-        )
-      })}
+                ))}
+              </div>
+            </Card>
+          )
+        })}
+      </div>
     </div>
   )
 }

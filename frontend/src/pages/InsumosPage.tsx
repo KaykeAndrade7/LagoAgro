@@ -13,6 +13,17 @@ import { listarAplicacoes } from '../api/aplicacoes'
 import { ApiError, paraApiError } from '../lib/api-client'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { InsumoForm } from '../components/InsumoForm'
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  IconPencil,
+  IconTrash,
+  LoadingState,
+  PageHeader,
+} from '../components/ui'
 
 type FormularioAberto = { tipo: 'novo' } | { tipo: 'editar'; insumo: Insumo } | null
 
@@ -62,16 +73,11 @@ export function InsumosPage() {
   })
 
   if (insumosQuery.isLoading) {
-    return <p>Carregando...</p>
+    return <LoadingState />
   }
 
   if (insumosQuery.isError) {
-    return (
-      <div>
-        <p>Nao foi possivel carregar os insumos.</p>
-        <button onClick={() => insumosQuery.refetch()}>Tentar novamente</button>
-      </div>
-    )
+    return <ErrorState message="Não foi possível carregar os insumos." onRetry={() => insumosQuery.refetch()} />
   }
 
   const insumos = insumosQuery.data ?? []
@@ -90,51 +96,62 @@ export function InsumosPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Insumos</h1>
-        <button
-          onClick={() => abrirFormulario({ tipo: 'novo' })}
-          className="rounded bg-green-700 px-3 py-1 text-sm text-white"
-        >
-          + Insumo
-        </button>
-      </div>
+      <PageHeader
+        title="Insumos"
+        action={
+          <Button size="sm" onClick={() => abrirFormulario({ tipo: 'novo' })}>
+            + Insumo
+          </Button>
+        }
+      />
 
       {formulario?.tipo === 'novo' && (
-        <InsumoForm
-          erro={erroFormulario}
-          onSubmit={(input) => criarMutation.mutate(input)}
-          onCancel={() => abrirFormulario(null)}
-        />
+        <Card className="mb-5 p-5">
+          <InsumoForm erro={erroFormulario} onSubmit={(input) => criarMutation.mutate(input)} onCancel={() => abrirFormulario(null)} />
+        </Card>
       )}
 
-      <ul>
+      {insumos.length === 0 && formulario?.tipo !== 'novo' && <EmptyState>Nenhum insumo cadastrado ainda.</EmptyState>}
+
+      <ul className="space-y-3">
         {insumos.map((insumo) =>
           formulario?.tipo === 'editar' && formulario.insumo.id === insumo.id ? (
-            <li key={insumo.id} className="mb-2 border p-2">
-              <InsumoForm
-                insumo={insumo}
-                erro={erroFormulario}
-                onSubmit={(input) => atualizarMutation.mutate({ id: insumo.id, input })}
-                onCancel={() => abrirFormulario(null)}
-              />
+            <li key={insumo.id}>
+              <Card className="p-5">
+                <InsumoForm
+                  insumo={insumo}
+                  erro={erroFormulario}
+                  onSubmit={(input) => atualizarMutation.mutate({ id: insumo.id, input })}
+                  onCancel={() => abrirFormulario(null)}
+                />
+              </Card>
             </li>
           ) : (
-            <li key={insumo.id} className="mb-2 flex items-center justify-between border p-2">
-              <span>
-                {insumo.nome} — {ROTULOS_TIPO_INSUMO[insumo.tipo]} — carencia: {insumo.carencia_dias} dia(s)
-              </span>
-              <div className="flex gap-2 text-sm">
-                <button onClick={() => abrirFormulario({ tipo: 'editar', insumo })}>Editar</button>
-                <button
-                  onClick={() => {
-                    setErroExclusao(null)
-                    setExclusaoPendente(insumo)
-                  }}
-                >
-                  Excluir
-                </button>
-              </div>
+            <li key={insumo.id}>
+              <Card className="flex flex-col gap-2 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-display font-bold text-ink">{insumo.nome}</p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <Badge tone={insumo.tipo === 'veneno' ? 'rust' : 'accent'}>{ROTULOS_TIPO_INSUMO[insumo.tipo]}</Badge>
+                    <span className="font-mono text-sm text-ink-soft">carência: {insumo.carencia_dias} dia(s)</span>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-1 sm:shrink-0">
+                  <Button variant="ghost" size="sm" onClick={() => abrirFormulario({ tipo: 'editar', insumo })}>
+                    <IconPencil className="h-4 w-4" /> Editar
+                  </Button>
+                  <Button
+                    variant="danger-ghost"
+                    size="sm"
+                    onClick={() => {
+                      setErroExclusao(null)
+                      setExclusaoPendente(insumo)
+                    }}
+                  >
+                    <IconTrash className="h-4 w-4" /> Excluir
+                  </Button>
+                </div>
+              </Card>
             </li>
           ),
         )}

@@ -5,6 +5,7 @@ import type { Insumo } from '../api/insumos'
 import type { AplicacaoInsumoInput } from '../api/aplicacoes'
 import type { ApiError } from '../lib/api-client'
 import { useMapeamentoErroFormulario } from '../lib/mutation-errors'
+import { Button, Field, FormError, Input, Select } from './ui'
 
 export type PlantioOpcao = { id: number; label: string }
 
@@ -54,57 +55,39 @@ export function AplicacaoInsumoForm({
   useMapeamentoErroFormulario(erro, setError, CAMPOS_CONHECIDOS)
 
   return (
-    <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-2">
-      {errors.root && <p className="text-sm text-red-600">{errors.root.message}</p>}
-      <div>
-        <label htmlFor="aplicacao-plantio" className="block text-sm">
-          Plantio
-        </label>
-        <select id="aplicacao-plantio" {...register('plantio')} className="border px-2 py-1">
+    <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-4">
+      <FormError>{errors.root?.message}</FormError>
+      <Field id="aplicacao-plantio" label="Plantio" error={errors.plantio?.message}>
+        <Select id="aplicacao-plantio" {...register('plantio')}>
           <option value={0}>Selecione...</option>
           {plantioOpcoes.map((opcao) => (
             <option key={opcao.id} value={opcao.id}>
               {opcao.label}
             </option>
           ))}
-        </select>
-        {errors.plantio && <p className="text-sm text-red-600">{errors.plantio.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="aplicacao-insumo" className="block text-sm">
-          Insumo
-        </label>
-        <select id="aplicacao-insumo" {...register('insumo')} className="border px-2 py-1">
+        </Select>
+      </Field>
+      <Field id="aplicacao-insumo" label="Insumo" error={errors.insumo?.message}>
+        <Select id="aplicacao-insumo" {...register('insumo')}>
           <option value={0}>Selecione...</option>
           {insumos.map((insumo) => (
             <option key={insumo.id} value={insumo.id}>
               {insumo.nome}
             </option>
           ))}
-        </select>
-        {errors.insumo && <p className="text-sm text-red-600">{errors.insumo.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="aplicacao-data" className="block text-sm">
-          Data da aplicacao
-        </label>
-        <input id="aplicacao-data" type="date" {...register('data')} className="border px-2 py-1" />
-        {errors.data && <p className="text-sm text-red-600">{errors.data.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="aplicacao-quantidade" className="block text-sm">
-          Quantidade
-        </label>
-        <input id="aplicacao-quantidade" {...register('quantidade')} className="border px-2 py-1" />
-        {errors.quantidade && <p className="text-sm text-red-600">{errors.quantidade.message}</p>}
-      </div>
-      <div className="flex gap-2">
-        <button type="submit" className="rounded bg-green-700 px-3 py-1 text-sm text-white">
-          Salvar
-        </button>
-        <button type="button" onClick={onCancel} className="rounded border px-3 py-1 text-sm">
+        </Select>
+      </Field>
+      <Field id="aplicacao-data" label="Data da aplicacao" error={errors.data?.message}>
+        <Input id="aplicacao-data" type="date" {...register('data')} />
+      </Field>
+      <Field id="aplicacao-quantidade" label="Quantidade" error={errors.quantidade?.message}>
+        <Input id="aplicacao-quantidade" inputMode="decimal" {...register('quantidade')} />
+      </Field>
+      <div className="flex gap-3">
+        <Button type="submit">Salvar</Button>
+        <Button type="button" variant="ghost" onClick={onCancel}>
           Cancelar
-        </button>
+        </Button>
       </div>
     </form>
   )

@@ -5,6 +5,7 @@ import type { Diaria, DiariaInput } from '../api/diarias'
 import type { PlantioOpcao } from './AplicacaoInsumoForm'
 import type { ApiError } from '../lib/api-client'
 import { useMapeamentoErroFormulario } from '../lib/mutation-errors'
+import { Button, Field, FormError, Input, Select } from './ui'
 
 const schema = z.object({
   plantio: z.coerce.number().min(1, 'Selecione um plantio'),
@@ -47,36 +48,26 @@ export function DiariaForm({ trabalhadorId, plantioOpcoes, diaria, erro, onSubmi
   }
 
   return (
-    <form onSubmit={handleSubmit(aoSubmeter)} className="space-y-2">
-      {errors.root && <p className="text-sm text-red-600">{errors.root.message}</p>}
-      <div>
-        <label htmlFor="diaria-plantio" className="block text-sm">
-          Plantio
-        </label>
-        <select id="diaria-plantio" {...register('plantio')} className="border px-2 py-1">
+    <form onSubmit={handleSubmit(aoSubmeter)} className="space-y-4 py-2">
+      <FormError>{errors.root?.message}</FormError>
+      <Field id="diaria-plantio" label="Plantio" error={errors.plantio?.message}>
+        <Select id="diaria-plantio" {...register('plantio')}>
           <option value={0}>Selecione...</option>
           {plantioOpcoes.map((opcao) => (
             <option key={opcao.id} value={opcao.id}>
               {opcao.label}
             </option>
           ))}
-        </select>
-        {errors.plantio && <p className="text-sm text-red-600">{errors.plantio.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="diaria-data" className="block text-sm">
-          Data
-        </label>
-        <input id="diaria-data" type="date" {...register('data')} className="border px-2 py-1" />
-        {errors.data && <p className="text-sm text-red-600">{errors.data.message}</p>}
-      </div>
-      <div className="flex gap-2">
-        <button type="submit" className="rounded bg-green-700 px-3 py-1 text-sm text-white">
-          Salvar
-        </button>
-        <button type="button" onClick={onCancel} className="rounded border px-3 py-1 text-sm">
+        </Select>
+      </Field>
+      <Field id="diaria-data" label="Data" error={errors.data?.message}>
+        <Input id="diaria-data" type="date" {...register('data')} />
+      </Field>
+      <div className="flex gap-3">
+        <Button type="submit">Salvar</Button>
+        <Button type="button" variant="ghost" onClick={onCancel}>
           Cancelar
-        </button>
+        </Button>
       </div>
     </form>
   )

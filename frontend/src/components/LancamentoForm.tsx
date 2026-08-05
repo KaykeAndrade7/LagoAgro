@@ -10,6 +10,7 @@ import {
 import type { PlantioOpcao } from './AplicacaoInsumoForm'
 import type { ApiError } from '../lib/api-client'
 import { useMapeamentoErroFormulario } from '../lib/mutation-errors'
+import { Button, Field, FormError, Input, Select } from './ui'
 
 const schema = z.object({
   plantio: z.coerce.number().min(1, 'Selecione um plantio'),
@@ -55,63 +56,41 @@ export function LancamentoForm({ plantioOpcoes, lancamento, erro, onSubmit, onCa
   useMapeamentoErroFormulario(erro, setError, CAMPOS_CONHECIDOS)
 
   return (
-    <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-2">
-      {errors.root && <p className="text-sm text-red-600">{errors.root.message}</p>}
-      <div>
-        <label htmlFor="lancamento-plantio" className="block text-sm">
-          Plantio
-        </label>
-        <select id="lancamento-plantio" {...register('plantio')} className="border px-2 py-1">
+    <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-4">
+      <FormError>{errors.root?.message}</FormError>
+      <Field id="lancamento-plantio" label="Plantio" error={errors.plantio?.message}>
+        <Select id="lancamento-plantio" {...register('plantio')}>
           <option value={0}>Selecione...</option>
           {plantioOpcoes.map((opcao) => (
             <option key={opcao.id} value={opcao.id}>
               {opcao.label}
             </option>
           ))}
-        </select>
-        {errors.plantio && <p className="text-sm text-red-600">{errors.plantio.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="lancamento-valor" className="block text-sm">
-          Valor
-        </label>
-        <input id="lancamento-valor" {...register('valor')} className="border px-2 py-1" />
-        {errors.valor && <p className="text-sm text-red-600">{errors.valor.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="lancamento-data" className="block text-sm">
-          Data
-        </label>
-        <input id="lancamento-data" type="date" {...register('data')} className="border px-2 py-1" />
-        {errors.data && <p className="text-sm text-red-600">{errors.data.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="lancamento-descricao" className="block text-sm">
-          Descrição
-        </label>
-        <input id="lancamento-descricao" {...register('descricao')} className="border px-2 py-1" />
-        {errors.descricao && <p className="text-sm text-red-600">{errors.descricao.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="lancamento-setor" className="block text-sm">
-          Setor
-        </label>
-        <select id="lancamento-setor" {...register('setor')} className="border px-2 py-1">
+        </Select>
+      </Field>
+      <Field id="lancamento-valor" label="Valor" error={errors.valor?.message}>
+        <Input id="lancamento-valor" inputMode="decimal" {...register('valor')} />
+      </Field>
+      <Field id="lancamento-data" label="Data" error={errors.data?.message}>
+        <Input id="lancamento-data" type="date" {...register('data')} />
+      </Field>
+      <Field id="lancamento-descricao" label="Descrição" error={errors.descricao?.message}>
+        <Input id="lancamento-descricao" {...register('descricao')} />
+      </Field>
+      <Field id="lancamento-setor" label="Setor" error={errors.setor?.message}>
+        <Select id="lancamento-setor" {...register('setor')}>
           {(Object.keys(ROTULOS_SETOR) as SetorLancamento[]).map((setor) => (
             <option key={setor} value={setor}>
               {ROTULOS_SETOR[setor]}
             </option>
           ))}
-        </select>
-        {errors.setor && <p className="text-sm text-red-600">{errors.setor.message}</p>}
-      </div>
-      <div className="flex gap-2">
-        <button type="submit" className="rounded bg-green-700 px-3 py-1 text-sm text-white">
-          Salvar
-        </button>
-        <button type="button" onClick={onCancel} className="rounded border px-3 py-1 text-sm">
+        </Select>
+      </Field>
+      <div className="flex gap-3">
+        <Button type="submit">Salvar</Button>
+        <Button type="button" variant="ghost" onClick={onCancel}>
           Cancelar
-        </button>
+        </Button>
       </div>
     </form>
   )

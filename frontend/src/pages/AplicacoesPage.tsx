@@ -9,6 +9,7 @@ import { ApiError, paraApiError } from '../lib/api-client'
 import { labelPlantio } from '../lib/plantio-labels'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { AplicacaoInsumoForm } from '../components/AplicacaoInsumoForm'
+import { Button, Card, EmptyState, ErrorState, IconTrash, LoadingState, PageHeader } from '../components/ui'
 
 export function AplicacoesPage() {
   const queryClient = useQueryClient()
@@ -50,7 +51,7 @@ export function AplicacoesPage() {
     culturasQuery.isLoading ||
     insumosQuery.isLoading
   ) {
-    return <p>Carregando...</p>
+    return <LoadingState />
   }
 
   if (
@@ -60,12 +61,7 @@ export function AplicacoesPage() {
     culturasQuery.isError ||
     insumosQuery.isError
   ) {
-    return (
-      <div>
-        <p>Nao foi possivel carregar as aplicacoes.</p>
-        <button onClick={() => aplicacoesQuery.refetch()}>Tentar novamente</button>
-      </div>
-    )
+    return <ErrorState message="Não foi possível carregar as aplicações." onRetry={() => aplicacoesQuery.refetch()} />
   }
 
   const aplicacoes = aplicacoesQuery.data ?? []
@@ -86,48 +82,65 @@ export function AplicacoesPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Aplicações</h1>
-        <button
-          onClick={() => {
-            setErroFormulario(null)
-            setFormularioAberto(true)
-          }}
-          className="rounded bg-green-700 px-3 py-1 text-sm text-white"
-        >
-          + Aplicação
-        </button>
-      </div>
+      <PageHeader
+        title="Aplicações"
+        action={
+          <Button
+            size="sm"
+            onClick={() => {
+              setErroFormulario(null)
+              setFormularioAberto(true)
+            }}
+          >
+            + Aplicação
+          </Button>
+        }
+      />
 
       {formularioAberto && (
-        <AplicacaoInsumoForm
-          plantioOpcoes={plantioOpcoes}
-          insumos={insumos}
-          erro={erroFormulario}
-          onSubmit={(input) => criarMutation.mutate(input)}
-          onCancel={() => {
-            setErroFormulario(null)
-            setFormularioAberto(false)
-          }}
-        />
+        <Card className="mb-5 p-5">
+          <AplicacaoInsumoForm
+            plantioOpcoes={plantioOpcoes}
+            insumos={insumos}
+            erro={erroFormulario}
+            onSubmit={(input) => criarMutation.mutate(input)}
+            onCancel={() => {
+              setErroFormulario(null)
+              setFormularioAberto(false)
+            }}
+          />
+        </Card>
       )}
 
-      <ul>
+      {aplicacoesOrdenadas.length === 0 && !formularioAberto && <EmptyState>Nenhuma aplicação registrada ainda.</EmptyState>}
+
+      <ul className="space-y-3">
         {aplicacoesOrdenadas.map((aplicacao) => (
-          <li key={aplicacao.id} className="mb-2 flex items-center justify-between border p-2">
-            <span>
-              {labelPlantio(plantios, talhoes, culturas, aplicacao.plantio)} — {nomeInsumo(aplicacao.insumo)} —{' '}
-              {new Date(`${aplicacao.data}T00:00:00`).toLocaleDateString('pt-BR')} — {aplicacao.quantidade}
-            </span>
-            <button
-              onClick={() => {
-                setErroExclusao(null)
-                setExclusaoPendente(aplicacao)
-              }}
-              className="text-sm"
-            >
-              Excluir
-            </button>
+          <li key={aplicacao.id}>
+            <Card className="flex flex-col gap-2 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-display font-bold text-ink">
+                  {labelPlantio(plantios, talhoes, culturas, aplicacao.plantio)}
+                </p>
+                <p className="mt-1 font-semibold text-ink-soft">
+                  {nomeInsumo(aplicacao.insumo)}{' '}
+                  <span className="font-mono text-sm">
+                    · {new Date(`${aplicacao.data}T00:00:00`).toLocaleDateString('pt-BR')} · {aplicacao.quantidade}
+                  </span>
+                </p>
+              </div>
+              <Button
+                variant="danger-ghost"
+                size="sm"
+                className="self-end sm:self-auto"
+                onClick={() => {
+                  setErroExclusao(null)
+                  setExclusaoPendente(aplicacao)
+                }}
+              >
+                <IconTrash className="h-4 w-4" /> Excluir
+              </Button>
+            </Card>
           </li>
         ))}
       </ul>

@@ -1,1 +1,108 @@
 @import "tailwindcss";
+
+/* Talão do Produtor — papel kraft, tinta carimbada, verde da marca.
+   Claro/escuro via custom properties: prefers-color-scheme decide, sem toggle manual. */
+
+:root {
+  --bg: #e3d6b0;
+  --paper: #f7efdb;
+  --ink: #241f16;
+  --ink-soft: #6b6047;
+  --line: #cab88c;
+  --accent: #166534;
+  --accent-contrast: #f7efdb;
+  --accent-soft: #dce8dc;
+  --amber: #92400e;
+  --amber-bg: #f0dfba;
+  --rust: #8a2e0e;
+  --rust-bg: #f0d5bf;
+  --danger: #9f1d1d;
+  --danger-bg: #f3d6d0;
+  --shadow-ink: #241f16;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #171308;
+    --paper: #241f16;
+    --ink: #f3ead2;
+    --ink-soft: #b6a883;
+    --line: #453b28;
+    --accent: #34a866;
+    --accent-contrast: #0d1a10;
+    --accent-soft: #1c3324;
+    --amber: #e2a33e;
+    --amber-bg: #3a2c14;
+    --rust: #e2764a;
+    --rust-bg: #3a1f14;
+    --danger: #e2604a;
+    --danger-bg: #3a1512;
+    --shadow-ink: #000000;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  --color-bg: var(--bg);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-accent-soft: var(--accent-soft);
+  --color-amber: var(--amber);
+  --color-amber-bg: var(--amber-bg);
+  --color-rust: var(--rust);
+  --color-rust-bg: var(--rust-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Papel de talão: linhas de caderno + furos perfurados na margem esquerda.
+   Um único utilitário porque `background-image` não compõe entre classes —
+   a última a declarar a propriedade apaga a anterior por completo. */
+@utility ticket-paper {
+  padding-left: 2rem;
+  background-image:
+    radial-gradient(
+      circle at 1rem center,
+      var(--bg) 0.24rem,
+      color-mix(in srgb, var(--ink) 30%, transparent) 0.24rem 0.29rem,
+      transparent 0.31rem
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 1.74rem,
+      color-mix(in srgb, var(--line) 55%, transparent) 1.74rem,
+      color-mix(in srgb, var(--line) 55%, transparent) calc(1.74rem + 1px)
+    );
+  background-repeat: repeat-y, repeat;
+  background-size: 100% 1.6rem, 100% auto;
+  background-position: 0 0, 0 2.6rem;
+}
+
+@utility stamp-shadow {
+  box-shadow: 3px 3px 0 0 var(--shadow-ink);
+}
+
+@utility stamp-shadow-sm {
+  box-shadow: 2px 2px 0 0 var(--shadow-ink);
+}
+
+@utility dashed-divider {
+  border-top: 2px dashed var(--line);
+}

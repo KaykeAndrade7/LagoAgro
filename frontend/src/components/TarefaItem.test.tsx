@@ -40,13 +40,13 @@ describe('TarefaItem', () => {
   it('tarefa atrasada recebe classe de destaque', () => {
     render(<TarefaItem tarefa={tarefaPendente} atrasada={true} onToggleConcluida={vi.fn()} />)
 
-    expect(screen.getByText(/Regar/).className).toContain('text-red-600')
+    expect(screen.getByText(/Regar/).className).toContain('text-rust')
   })
 
   it('tarefa concluida recebe estilo riscado, nao vermelho', () => {
     render(<TarefaItem tarefa={tarefaConcluida} atrasada={false} onToggleConcluida={vi.fn()} />)
 
     expect(screen.getByText(/Adubar/).className).toContain('line-through')
-    expect(screen.getByText(/Adubar/).className).not.toContain('text-red-600')
+    expect(screen.getByText(/Adubar/).className).not.toContain('text-rust')
   })
 })

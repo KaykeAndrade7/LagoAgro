@@ -5,6 +5,7 @@ import type { Tarefa, TarefaInput } from '../api/tarefas'
 import type { PlantioOpcao } from './AplicacaoInsumoForm'
 import type { ApiError } from '../lib/api-client'
 import { useMapeamentoErroFormulario } from '../lib/mutation-errors'
+import { Button, Field, FormError, Input, Select } from './ui'
 
 const schema = z.object({
   plantio: z.coerce.number().min(1, 'Selecione um plantio'),
@@ -46,43 +47,29 @@ export function TarefaForm({ plantioOpcoes, tarefa, erro, onSubmit, onCancel }: 
   useMapeamentoErroFormulario(erro, setError, CAMPOS_CONHECIDOS)
 
   return (
-    <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-2">
-      {errors.root && <p className="text-sm text-red-600">{errors.root.message}</p>}
-      <div>
-        <label htmlFor="tarefa-plantio" className="block text-sm">
-          Plantio
-        </label>
-        <select id="tarefa-plantio" {...register('plantio')} className="border px-2 py-1">
+    <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-4">
+      <FormError>{errors.root?.message}</FormError>
+      <Field id="tarefa-plantio" label="Plantio" error={errors.plantio?.message}>
+        <Select id="tarefa-plantio" {...register('plantio')}>
           <option value={0}>Selecione...</option>
           {plantioOpcoes.map((opcao) => (
             <option key={opcao.id} value={opcao.id}>
               {opcao.label}
             </option>
           ))}
-        </select>
-        {errors.plantio && <p className="text-sm text-red-600">{errors.plantio.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="tarefa-descricao" className="block text-sm">
-          Descrição
-        </label>
-        <input id="tarefa-descricao" {...register('descricao')} className="border px-2 py-1" />
-        {errors.descricao && <p className="text-sm text-red-600">{errors.descricao.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="tarefa-data" className="block text-sm">
-          Data
-        </label>
-        <input id="tarefa-data" type="date" {...register('data')} className="border px-2 py-1" />
-        {errors.data && <p className="text-sm text-red-600">{errors.data.message}</p>}
-      </div>
-      <div className="flex gap-2">
-        <button type="submit" className="rounded bg-green-700 px-3 py-1 text-sm text-white">
-          Salvar
-        </button>
-        <button type="button" onClick={onCancel} className="rounded border px-3 py-1 text-sm">
+        </Select>
+      </Field>
+      <Field id="tarefa-descricao" label="Descrição" error={errors.descricao?.message}>
+        <Input id="tarefa-descricao" {...register('descricao')} />
+      </Field>
+      <Field id="tarefa-data" label="Data" error={errors.data?.message}>
+        <Input id="tarefa-data" type="date" {...register('data')} />
+      </Field>
+      <div className="flex gap-3">
+        <Button type="submit">Salvar</Button>
+        <Button type="button" variant="ghost" onClick={onCancel}>
           Cancelar
-        </button>
+        </Button>
       </div>
     </form>
   )

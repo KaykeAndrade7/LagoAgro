@@ -4,6 +4,7 @@ import { z } from 'zod'
 import type { Trabalhador, TrabalhadorInput } from '../api/trabalhadores'
 import type { ApiError } from '../lib/api-client'
 import { useMapeamentoErroFormulario } from '../lib/mutation-errors'
+import { Button, Checkbox, Field, FormError, Input } from './ui'
 
 const schema = z.object({
   nome: z.string().min(1, 'Nome e obrigatorio'),
@@ -43,36 +44,20 @@ export function TrabalhadorForm({ trabalhador, erro, onSubmit, onCancel }: Traba
   useMapeamentoErroFormulario(erro, setError, CAMPOS_CONHECIDOS)
 
   return (
-    <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-2">
-      {errors.root && <p className="text-sm text-red-600">{errors.root.message}</p>}
-      <div>
-        <label htmlFor="trabalhador-nome" className="block text-sm">
-          Nome
-        </label>
-        <input id="trabalhador-nome" {...register('nome')} className="border px-2 py-1" />
-        {errors.nome && <p className="text-sm text-red-600">{errors.nome.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="trabalhador-valor-diaria" className="block text-sm">
-          Valor da diária
-        </label>
-        <input id="trabalhador-valor-diaria" {...register('valor_diaria')} className="border px-2 py-1" />
-        {errors.valor_diaria && <p className="text-sm text-red-600">{errors.valor_diaria.message}</p>}
-      </div>
-      <div>
-        <label htmlFor="trabalhador-ativo" className="flex items-center gap-2 text-sm">
-          <input id="trabalhador-ativo" type="checkbox" {...register('ativo')} />
-          Ativo
-        </label>
-        {errors.ativo && <p className="text-sm text-red-600">{errors.ativo.message}</p>}
-      </div>
-      <div className="flex gap-2">
-        <button type="submit" className="rounded bg-green-700 px-3 py-1 text-sm text-white">
-          Salvar
-        </button>
-        <button type="button" onClick={onCancel} className="rounded border px-3 py-1 text-sm">
+    <form onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-4">
+      <FormError>{errors.root?.message}</FormError>
+      <Field id="trabalhador-nome" label="Nome" error={errors.nome?.message}>
+        <Input id="trabalhador-nome" {...register('nome')} />
+      </Field>
+      <Field id="trabalhador-valor-diaria" label="Valor da diária" error={errors.valor_diaria?.message}>
+        <Input id="trabalhador-valor-diaria" inputMode="decimal" {...register('valor_diaria')} />
+      </Field>
+      <Checkbox id="trabalhador-ativo" label="Ativo" {...register('ativo')} />
+      <div className="flex gap-3">
+        <Button type="submit">Salvar</Button>
+        <Button type="button" variant="ghost" onClick={onCancel}>
           Cancelar
-        </button>
+        </Button>
       </div>
     </form>
   )
