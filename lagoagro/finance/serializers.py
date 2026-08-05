@@ -25,7 +25,7 @@ class LancamentoFinanceiroSerializer(serializers.ModelSerializer):
             tipo = attrs.get("tipo", self.instance.tipo)
             setor = attrs.get("setor", self.instance.setor)
         else:
-            tipo = attrs.get("tipo", "gasto")
+            tipo = attrs.get("tipo")
             setor = attrs.get("setor")
 
         setores_validos = LancamentoFinanceiro.GANHO_SETORES if tipo == "ganho" else LancamentoFinanceiro.GASTO_SETORES

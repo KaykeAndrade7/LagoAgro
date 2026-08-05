@@ -103,6 +103,30 @@ def test_criar_lancamento_ganho_com_setor_venda_colheita_funciona(criar_usuario_
     assert response.data["tipo"] == "ganho"
 
 
+def test_patch_lancamento_gasto_com_setor_de_ganho_retorna_400(criar_usuario_autenticado):
+    usuario, client = criar_usuario_autenticado()
+    plantio = _criar_plantio(usuario)
+    lancamento = LancamentoFinanceiro.objects.create(
+        plantio=plantio, tipo="gasto", valor="150.00", data="2026-01-15", descricao="Compra de mudas", setor="insumos",
+    )
+
+    response = client.patch(f"/api/lancamentos-financeiros/{lancamento.id}/", {"setor": "venda_colheita"})
+
+    assert response.status_code == 400
+
+
+def test_patch_lancamento_troca_tipo_pra_ganho_com_setor_de_gasto_retorna_400(criar_usuario_autenticado):
+    usuario, client = criar_usuario_autenticado()
+    plantio = _criar_plantio(usuario)
+    lancamento = LancamentoFinanceiro.objects.create(
+        plantio=plantio, tipo="gasto", valor="150.00", data="2026-01-15", descricao="Compra de mudas", setor="insumos",
+    )
+
+    response = client.patch(f"/api/lancamentos-financeiros/{lancamento.id}/", {"tipo": "ganho"})
+
+    assert response.status_code == 400
+
+
 # --- Trabalhador ---
 
 def test_criar_trabalhador_associa_usuario_autenticado(criar_usuario_autenticado):
