@@ -66,13 +66,7 @@ export function LancamentoForm({ plantioOpcoes, lancamento, erro, onSubmit, onCa
   const tipoValue = watch('tipo')
   const tipoSelecionado: TipoLancamento = (tipoValue === 'ganho' ? 'ganho' : 'gasto')
   const setorSelecionado = (watch('setor') ?? 'outros') as SetorLancamento
-
-  // Use imported SETORES_POR_TIPO with a local fallback for safety
-  const setoresValidos: SetorLancamento[] = (SETORES_POR_TIPO && SETORES_POR_TIPO[tipoSelecionado] && SETORES_POR_TIPO[tipoSelecionado].length > 0)
-    ? SETORES_POR_TIPO[tipoSelecionado]
-    : (tipoSelecionado === 'ganho'
-      ? ['venda_colheita', 'outros']
-      : ['mao_de_obra', 'insumos', 'maquinario', 'transporte', 'manutencao', 'outros']) as SetorLancamento[]
+  const setoresValidos = SETORES_POR_TIPO[tipoSelecionado]
 
   // Trocar de tipo com uma categoria que nao existe mais no novo tipo
   // (ex.: "Insumos" ao trocar de Gasto pra Ganho) reseta pro primeiro

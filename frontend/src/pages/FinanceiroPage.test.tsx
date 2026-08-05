@@ -10,7 +10,16 @@ import * as plantiosApi from '../api/plantios'
 import * as talhoesApi from '../api/talhoes'
 import * as culturasApi from '../api/culturas'
 
-vi.mock('../api/lancamentos')
+vi.mock('../api/lancamentos', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../api/lancamentos')>()
+  return {
+    ...actual,
+    listarLancamentos: vi.fn(),
+    criarLancamento: vi.fn(),
+    atualizarLancamento: vi.fn(),
+    excluirLancamento: vi.fn(),
+  }
+})
 vi.mock('../api/diarias')
 vi.mock('../api/plantios')
 vi.mock('../api/talhoes')
