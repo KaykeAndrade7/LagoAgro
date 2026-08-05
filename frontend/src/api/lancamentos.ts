@@ -1,10 +1,20 @@
 import { apiRequest } from '../lib/api-client'
 
-export type SetorLancamento = 'mao_de_obra' | 'insumos' | 'maquinario' | 'transporte' | 'manutencao' | 'outros'
+export type TipoLancamento = 'gasto' | 'ganho'
+
+export type SetorLancamento =
+  | 'mao_de_obra'
+  | 'insumos'
+  | 'maquinario'
+  | 'transporte'
+  | 'manutencao'
+  | 'venda_colheita'
+  | 'outros'
 
 export type LancamentoFinanceiro = {
   id: number
   plantio: number
+  tipo: TipoLancamento
   valor: string
   data: string
   descricao: string
@@ -13,10 +23,16 @@ export type LancamentoFinanceiro = {
 
 export type LancamentoFinanceiroInput = {
   plantio: number
+  tipo: TipoLancamento
   valor: string
   data: string
   descricao: string
   setor: SetorLancamento
+}
+
+export const ROTULOS_TIPO: Record<TipoLancamento, string> = {
+  gasto: 'Gasto',
+  ganho: 'Ganho',
 }
 
 export const ROTULOS_SETOR: Record<SetorLancamento, string> = {
@@ -25,7 +41,13 @@ export const ROTULOS_SETOR: Record<SetorLancamento, string> = {
   maquinario: 'Maquinário/equipamentos',
   transporte: 'Transporte/frete',
   manutencao: 'Manutenção/infraestrutura',
+  venda_colheita: 'Venda de colheita',
   outros: 'Outros',
+}
+
+export const SETORES_POR_TIPO: Record<TipoLancamento, SetorLancamento[]> = {
+  gasto: ['mao_de_obra', 'insumos', 'maquinario', 'transporte', 'manutencao', 'outros'],
+  ganho: ['venda_colheita', 'outros'],
 }
 
 export function listarLancamentos(): Promise<LancamentoFinanceiro[]> {
