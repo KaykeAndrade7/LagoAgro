@@ -47,16 +47,42 @@ describe('FinanceiroPage', () => {
     vi.mocked(diariasApi.listarDiarias).mockResolvedValue([])
   })
 
-  it('lista carrega e mostra o total geral', async () => {
+  it('lista carrega e mostra os totais separados de gasto, ganho e saldo', async () => {
     vi.mocked(lancamentosApi.listarLancamentos).mockResolvedValue([
       { id: 1, plantio: 1, tipo: 'gasto', valor: '150.00', data: '2026-08-05', descricao: 'Compra de mudas', setor: 'insumos' },
-      { id: 2, plantio: 1, tipo: 'gasto', valor: '50.00', data: '2026-08-06', descricao: 'Frete', setor: 'transporte' },
+      { id: 2, plantio: 1, tipo: 'gasto', valor: '30.00', data: '2026-08-06', descricao: 'Frete', setor: 'transporte' },
+      { id: 3, plantio: 1, tipo: 'ganho', valor: '400.00', data: '2026-08-07', descricao: 'Venda tomate', setor: 'venda_colheita' },
     ])
 
     renderComProvider()
 
     expect(await screen.findByText(/Compra de mudas/)).toBeInTheDocument()
-    expect(await screen.findByText('Total: R$ 200.00')).toBeInTheDocument()
+    expect(await screen.findByText('R$ 180.00')).toBeInTheDocument()
+    expect(await screen.findByText('R$ 400.00')).toBeInTheDocument()
+    expect(await screen.findByText('R$ 220.00')).toBeInTheDocument()
+  })
+
+  it('filtro mostra so os gastos, so os ganhos, ou todos', async () => {
+    vi.mocked(lancamentosApi.listarLancamentos).mockResolvedValue([
+      { id: 1, plantio: 1, tipo: 'gasto', valor: '150.00', data: '2026-08-05', descricao: 'Compra de mudas', setor: 'insumos' },
+      { id: 2, plantio: 1, tipo: 'ganho', valor: '400.00', data: '2026-08-07', descricao: 'Venda tomate', setor: 'venda_colheita' },
+    ])
+
+    renderComProvider()
+    await screen.findByText(/Compra de mudas/)
+    expect(screen.getByText(/Venda tomate/)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByText('Gastos'))
+    expect(screen.getByText(/Compra de mudas/)).toBeInTheDocument()
+    expect(screen.queryByText(/Venda tomate/)).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByText('Ganhos'))
+    expect(screen.queryByText(/Compra de mudas/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Venda tomate/)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByText('Todos'))
+    expect(screen.getByText(/Compra de mudas/)).toBeInTheDocument()
+    expect(screen.getByText(/Venda tomate/)).toBeInTheDocument()
   })
 
   it('criar lancamento via formulario adiciona o item a lista', async () => {
