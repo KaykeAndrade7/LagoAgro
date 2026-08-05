@@ -1,14 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { suportaPush, ativarNotificacoes } from '../lib/push'
+import { promptDisponivel, assinarDisponibilidade, solicitarInstalacao } from '../lib/install-prompt'
 
 type EstadoNotificacoes = 'idle' | 'carregando' | 'ativado' | 'negado' | 'indisponivel' | 'erro'
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { logout } = useAuth()
   const [estadoNotificacoes, setEstadoNotificacoes] = useState<EstadoNotificacoes>('idle')
+  const [instalacaoDisponivel, setInstalacaoDisponivel] = useState(promptDisponivel())
+
+  useEffect(() => {
+    return assinarDisponibilidade(() => setInstalacaoDisponivel(promptDisponivel()))
+  }, [])
 
   async function aoClicarAtivarNotificacoes() {
     setEstadoNotificacoes('carregando')
@@ -18,6 +24,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     } catch {
       setEstadoNotificacoes('erro')
     }
+  }
+
+  async function aoClicarInstalar() {
+    await solicitarInstalacao()
+    setInstalacaoDisponivel(false)
   }
 
   return (
@@ -39,6 +50,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
         </div>
         <div className="flex items-center gap-3 text-sm">
+          {instalacaoDisponivel && <button onClick={aoClicarInstalar}>Instalar app</button>}
           {suportaPush() && estadoNotificacoes !== 'ativado' && (
             <button onClick={aoClicarAtivarNotificacoes} disabled={estadoNotificacoes === 'carregando'}>
               {estadoNotificacoes === 'carregando' ? 'Ativando...' : 'Ativar notificações'}
