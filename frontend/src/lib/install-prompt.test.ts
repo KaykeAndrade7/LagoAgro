@@ -30,11 +30,12 @@ describe('install-prompt', () => {
 
   it('assinarDisponibilidade notifica quando beforeinstallprompt dispara', () => {
     const callback = vi.fn()
-    assinarDisponibilidade(callback)
+    const cancelar = assinarDisponibilidade(callback)
 
     window.dispatchEvent(criarEventoBeforeInstallPrompt(Promise.resolve({ outcome: 'accepted' })))
 
     expect(callback).toHaveBeenCalled()
+    cancelar()
   })
 
   it('a funcao de cancelamento de assinarDisponibilidade para de notificar', () => {
