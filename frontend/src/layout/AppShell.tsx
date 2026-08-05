@@ -13,6 +13,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [instalacaoDisponivel, setInstalacaoDisponivel] = useState(promptDisponivel())
 
   useEffect(() => {
+    setInstalacaoDisponivel(promptDisponivel())
     return assinarDisponibilidade(() => setInstalacaoDisponivel(promptDisponivel()))
   }, [])
 
@@ -27,8 +28,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   async function aoClicarInstalar() {
-    await solicitarInstalacao()
-    setInstalacaoDisponivel(false)
+    try {
+      await solicitarInstalacao()
+    } finally {
+      setInstalacaoDisponivel(false)
+    }
   }
 
   return (
