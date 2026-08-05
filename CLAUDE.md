@@ -118,5 +118,12 @@ e cobertos por testes. Consultar `docs/adr/` para o histórico de decisões e
 `docs/requirements.md` para o que ainda falta por RF.
 
 O backend de RF11 (job de Web Push, app `notifications`) está implementado e
-testado, mas ainda não conectado à produção — chaves VAPID reais, o disparo
-via cron e o segredo de produção ficam para a Task #9 (Deploy).
+testado, mas as chaves VAPID reais, o disparo via cron e o segredo de
+produção ainda não foram configurados — único pedaço de RF11 ainda pendente.
+
+**Task #9 (Deploy) concluída (2026-08-05):** app no ar em produção —
+backend no Render (`render.yaml` na raiz, banco Postgres no Neon) e
+frontend na Vercel (`https://lago-agro.vercel.app`). Variáveis de ambiente
+de produção (`SECRET_KEY`, `DATABASE_URL`, `CORS_ALLOWED_ORIGINS`, etc.)
+vivem só nos painéis do Render/Vercel, não no repo — ver `render.yaml` e
+`frontend/.env.production.example` pra saber quais existem.
