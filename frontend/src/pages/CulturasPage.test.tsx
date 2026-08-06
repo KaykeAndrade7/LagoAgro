@@ -22,7 +22,7 @@ describe('CulturasPage', () => {
   })
 
   it('lista carrega e mostra nome e ciclo de cada cultura', async () => {
-    vi.mocked(culturasApi.listarCulturas).mockResolvedValue([{ id: 1, nome: 'Tomate', ciclo_dias: 90, fases: [] }])
+    vi.mocked(culturasApi.listarCulturas).mockResolvedValue([{ id: 1, nome: 'Tomate', ciclo_dias: 90, fases: [], somente_leitura: false }])
 
     renderComProvider()
 
@@ -39,6 +39,7 @@ describe('CulturasPage', () => {
           { id: 1, nome: 'Muda', dia_inicio: 0, dia_fim: 20 },
           { id: 2, nome: 'Floracao', dia_inicio: 21, dia_fim: 50 },
         ],
+        somente_leitura: false,
       },
     ])
 
@@ -51,7 +52,7 @@ describe('CulturasPage', () => {
   })
 
   it('nao mostra nenhum elemento de criar, editar ou excluir', async () => {
-    vi.mocked(culturasApi.listarCulturas).mockResolvedValue([{ id: 1, nome: 'Tomate', ciclo_dias: 90, fases: [] }])
+    vi.mocked(culturasApi.listarCulturas).mockResolvedValue([{ id: 1, nome: 'Tomate', ciclo_dias: 90, fases: [], somente_leitura: false }])
 
     renderComProvider()
     await screen.findByText(/Tomate/)
