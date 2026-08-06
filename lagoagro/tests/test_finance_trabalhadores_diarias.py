@@ -3,7 +3,6 @@ from decimal import Decimal
 import pytest
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
-from django.db.models.deletion import ProtectedError
 
 from crops.models import Cultura
 from finance.models import Diaria, LancamentoFinanceiro, Trabalhador
@@ -58,25 +57,27 @@ def test_diaria_duplicada_no_mesmo_dia_para_o_mesmo_trabalhador_falha():
         Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-01")
 
 
-def test_deletar_trabalhador_com_diaria_e_protegido():
+def test_deletar_trabalhador_deleta_diarias_em_cascata():
     usuario, plantio = _criar_plantio_e_usuario()
     trabalhador = Trabalhador.objects.create(usuario=usuario, nome="Joao", valor_diaria=Decimal("120.00"))
     Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-01")
 
-    with pytest.raises(ProtectedError):
-        trabalhador.delete()
+    trabalhador.delete()
+
+    assert Diaria.objects.count() == 0
 
 
-def test_deletar_plantio_com_diaria_e_protegido():
+def test_deletar_plantio_deleta_diarias_em_cascata():
     usuario, plantio = _criar_plantio_e_usuario()
     trabalhador = Trabalhador.objects.create(usuario=usuario, nome="Joao", valor_diaria=Decimal("120.00"))
     Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-01")
 
-    with pytest.raises(ProtectedError):
-        plantio.delete()
+    plantio.delete()
+
+    assert Diaria.objects.count() == 0
 
 
-def test_deletar_lancamento_vinculado_a_diaria_paga_e_protegido():
+def test_deletar_lancamento_vinculado_a_diaria_paga_desfaz_o_pagamento():
     usuario, plantio = _criar_plantio_e_usuario()
     trabalhador = Trabalhador.objects.create(usuario=usuario, nome="Joao", valor_diaria=Decimal("120.00"))
     diaria = Diaria.objects.create(trabalhador=trabalhador, plantio=plantio, data="2026-02-01")
@@ -86,8 +87,10 @@ def test_deletar_lancamento_vinculado_a_diaria_paga_e_protegido():
     diaria.lancamento = lancamento
     diaria.save()
 
-    with pytest.raises(ProtectedError):
-        lancamento.delete()
+    lancamento.delete()
+    diaria.refresh_from_db()
+
+    assert diaria.lancamento is None
 
 
 def test_pagar_diarias_pendentes_agrupa_por_plantio_um_plantio():

@@ -12,17 +12,19 @@ class Trabalhador(models.Model):
         return self.nome
 
 
-# trabalhador e plantio sao PROTECT pelo mesmo motivo de AplicacaoInsumo em
-# inputs/models.py (ADR 007): a diaria e trilha de pagamento e nao pode sumir
-# junto com o registro que ela referencia.
+# trabalhador e plantio sao CASCADE (ADR 009 - reverte a ADR 007/008): o dono
+# da conta pode excluir o trabalhador ou o plantio e as diarias vinculadas
+# somem junto. lancamento e SET_NULL: excluir o lancamento (pagamento) nao
+# apaga a diaria em si, so desfaz o vinculo - a diaria volta a aparecer como
+# pendente de pagamento.
 class Diaria(models.Model):
-    trabalhador = models.ForeignKey(Trabalhador, on_delete=models.PROTECT, related_name="diarias")
-    plantio = models.ForeignKey("plantings.Plantio", on_delete=models.PROTECT, related_name="diarias")
+    trabalhador = models.ForeignKey(Trabalhador, on_delete=models.CASCADE, related_name="diarias")
+    plantio = models.ForeignKey("plantings.Plantio", on_delete=models.CASCADE, related_name="diarias")
     data = models.DateField()
     valor = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
     lancamento = models.ForeignKey(
         "finance.LancamentoFinanceiro",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="diarias_pagas",
@@ -66,9 +68,9 @@ class LancamentoFinanceiro(models.Model):
     GASTO_SETORES = {"mao_de_obra", "insumos", "maquinario", "transporte", "manutencao", "outros"}
     GANHO_SETORES = {"venda_colheita", "outros"}
 
-    # plantio e PROTECT (ADR 008): lancamento e trilha financeira e nao pode
-    # sumir junto com o plantio (usar Plantio.status="cancelado" em vez de deletar).
-    plantio = models.ForeignKey("plantings.Plantio", on_delete=models.PROTECT, related_name="lancamentos")
+    # plantio e CASCADE (ADR 009 - reverte a ADR 008): o dono da conta pode
+    # excluir o plantio e o historico financeiro vinculado some junto.
+    plantio = models.ForeignKey("plantings.Plantio", on_delete=models.CASCADE, related_name="lancamentos")
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default="gasto")
     valor = models.DecimalField(max_digits=10, decimal_places=2)
     data = models.DateField()

@@ -37,9 +37,11 @@ class DiariaViewSet(UsuarioScopedQuerySetMixin, viewsets.ModelViewSet):
     usuario_lookup = "plantio__talhao__propriedade__usuario"
 
     def destroy(self, request, *args, **kwargs):
-        # Diaria com lancamento setado ja foi paga (acao pagar-diarias) - a
-        # trilha de pagamento nao pode sumir, senao o LancamentoFinanceiro
-        # gerado fica orfao (mesma razao do PROTECT no model).
+        # Diaria com lancamento setado ja foi paga (acao pagar-diarias) - o
+        # valor do LancamentoFinanceiro agrupado nao seria recalculado se a
+        # diaria sumisse por baixo dele. Fluxo esperado: excluir o
+        # lancamento (ADR 009) desfaz o pagamento (lancamento=None) e so
+        # depois a diaria pode ser excluida.
         instance = self.get_object()
         if instance.lancamento_id is not None:
             return Response(
