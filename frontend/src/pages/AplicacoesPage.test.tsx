@@ -17,7 +17,7 @@ vi.mock('../api/culturas')
 vi.mock('../api/insumos')
 
 const talhao = { id: 1, propriedade: 1, nome: 'Talhao 1', area: '2.50', tipo_solo: 'Argiloso' }
-const cultura = { id: 1, nome: 'Tomate', ciclo_dias: 90, fases: [] }
+const cultura = { id: 1, nome: 'Tomate', ciclo_dias: 90, fases: [], somente_leitura: false }
 const plantio = { id: 1, talhao: 1, cultura: 1, data_plantio: '2026-08-02', status: 'em_andamento' as const }
 const insumo = { id: 1, nome: 'Calda bordalesa', tipo: 'veneno' as const, carencia_dias: 7 }
 
