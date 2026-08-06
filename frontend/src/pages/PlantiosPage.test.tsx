@@ -26,7 +26,7 @@ describe('PlantiosPage', () => {
     vi.mocked(talhoesApi.listarTalhoes).mockResolvedValue([
       { id: 1, propriedade: 1, nome: 'Talhao 1', area: '1.00', tipo_solo: 'Arenoso' },
     ])
-    vi.mocked(culturasApi.listarCulturas).mockResolvedValue([{ id: 1, nome: 'Tomate', ciclo_dias: 90, fases: [] }])
+    vi.mocked(culturasApi.listarCulturas).mockResolvedValue([{ id: 1, nome: 'Tomate', ciclo_dias: 90, fases: [], somente_leitura: false }])
   })
 
   it('selects do formulario sao populados a partir das queries de talhoes e culturas', async () => {

@@ -37,6 +37,46 @@ def test_criar_plantio_com_talhao_de_outro_usuario_retorna_400(criar_usuario_aut
     assert response.status_code == 400
 
 
+def test_criar_plantio_com_cultura_propria_de_outro_usuario_retorna_400(criar_usuario_autenticado):
+    usuario, client = criar_usuario_autenticado("produtor1")
+    outro = get_user_model().objects.create_user(username="produtor2", password="senha123")
+    propriedade = Propriedade.objects.create(usuario=usuario, nome="Sitio Boa Vista")
+    talhao = Talhao.objects.create(propriedade=propriedade, nome="Talhao 1", area=Decimal("2.50"), tipo_solo="argiloso")
+    cultura_propria_de_outro = Cultura.objects.create(usuario=outro, nome="Tomate Cereja", ciclo_dias=70)
+
+    response = client.post("/api/plantios/", {
+        "talhao": talhao.id, "cultura": cultura_propria_de_outro.id, "data_plantio": "2026-01-01",
+    })
+
+    assert response.status_code == 400
+
+
+def test_criar_plantio_com_cultura_embutida_funciona(criar_usuario_autenticado):
+    usuario, client = criar_usuario_autenticado()
+    propriedade = Propriedade.objects.create(usuario=usuario, nome="Sitio Boa Vista")
+    talhao = Talhao.objects.create(propriedade=propriedade, nome="Talhao 1", area=Decimal("2.50"), tipo_solo="argiloso")
+    cultura_embutida = Cultura.objects.create(nome="Pimentao", ciclo_dias=90)
+
+    response = client.post("/api/plantios/", {
+        "talhao": talhao.id, "cultura": cultura_embutida.id, "data_plantio": "2026-01-01",
+    })
+
+    assert response.status_code == 201
+
+
+def test_criar_plantio_com_cultura_propria_funciona(criar_usuario_autenticado):
+    usuario, client = criar_usuario_autenticado()
+    propriedade = Propriedade.objects.create(usuario=usuario, nome="Sitio Boa Vista")
+    talhao = Talhao.objects.create(propriedade=propriedade, nome="Talhao 1", area=Decimal("2.50"), tipo_solo="argiloso")
+    cultura_propria = Cultura.objects.create(usuario=usuario, nome="Tomate Cereja", ciclo_dias=70)
+
+    response = client.post("/api/plantios/", {
+        "talhao": talhao.id, "cultura": cultura_propria.id, "data_plantio": "2026-01-01",
+    })
+
+    assert response.status_code == 201
+
+
 def test_listar_plantios_so_retorna_do_usuario_autenticado(criar_usuario_autenticado):
     usuario, client = criar_usuario_autenticado()
     outro = get_user_model().objects.create_user(username="produtor2", password="senha123")
