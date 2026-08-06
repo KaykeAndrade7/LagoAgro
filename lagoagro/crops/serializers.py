@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.db.models import Q
 from rest_framework import serializers
 
@@ -25,7 +26,11 @@ class CulturaSerializer(serializers.ModelSerializer):
     def validate_fases(self, fases):
         if not fases:
             raise serializers.ValidationError("Cadastre pelo menos uma fase.")
+        campos_obrigatorios = {"nome", "dia_inicio", "dia_fim"}
         for fase in fases:
+            faltando = campos_obrigatorios - fase.keys()
+            if faltando:
+                raise serializers.ValidationError(f"Fase incompleta, faltando: {', '.join(sorted(faltando))}.")
             if fase["dia_inicio"] >= fase["dia_fim"]:
                 raise serializers.ValidationError("Em cada fase, dia_inicio deve ser menor que dia_fim.")
         return fases
@@ -47,18 +52,20 @@ class CulturaSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         fases_data = validated_data.pop("fases")
-        cultura = Cultura.objects.create(**validated_data)
-        FaseCultura.objects.bulk_create([FaseCultura(cultura=cultura, **fase) for fase in fases_data])
+        with transaction.atomic():
+            cultura = Cultura.objects.create(**validated_data)
+            FaseCultura.objects.bulk_create([FaseCultura(cultura=cultura, **fase) for fase in fases_data])
         return cultura
 
     def update(self, instance, validated_data):
         # Substituicao completa da lista de fases (nao merge item a item) -
         # mais simples e evita fase "orfa" quando o cliente reordena/remove.
         fases_data = validated_data.pop("fases", None)
-        instance.nome = validated_data.get("nome", instance.nome)
-        instance.ciclo_dias = validated_data.get("ciclo_dias", instance.ciclo_dias)
-        instance.save()
-        if fases_data is not None:
-            instance.fases.all().delete()
-            FaseCultura.objects.bulk_create([FaseCultura(cultura=instance, **fase) for fase in fases_data])
+        with transaction.atomic():
+            instance.nome = validated_data.get("nome", instance.nome)
+            instance.ciclo_dias = validated_data.get("ciclo_dias", instance.ciclo_dias)
+            instance.save()
+            if fases_data is not None:
+                instance.fases.all().delete()
+                FaseCultura.objects.bulk_create([FaseCultura(cultura=instance, **fase) for fase in fases_data])
         return instance

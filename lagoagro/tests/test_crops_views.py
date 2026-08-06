@@ -1,4 +1,3 @@
-import pytest
 from rest_framework.test import APIClient
 
 from crops.models import Cultura, FaseCultura
@@ -151,3 +150,38 @@ def test_excluir_cultura_propria_sem_uso_funciona(criar_usuario_autenticado):
 
     assert response.status_code == 204
     assert not Cultura.objects.filter(id=criada["id"]).exists()
+
+
+def test_editar_cultura_com_fase_incompleta_retorna_400(criar_usuario_autenticado):
+    _, client = criar_usuario_autenticado()
+    criada = client.post("/api/culturas/", _payload_valido(), format="json").data
+
+    response = client.patch(
+        f"/api/culturas/{criada['id']}/",
+        {"fases": [{"nome": "Fase sem dia_fim", "dia_inicio": 0}]},
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert "fases" in response.data
+
+
+def test_editar_cultura_de_outro_usuario_retorna_404(criar_usuario_autenticado):
+    _, client1 = criar_usuario_autenticado("produtor1")
+    _, client2 = criar_usuario_autenticado("produtor2")
+    criada = client1.post("/api/culturas/", _payload_valido(), format="json").data
+
+    response = client2.patch(f"/api/culturas/{criada['id']}/", {"nome": "Nome alterado"}, format="json")
+
+    assert response.status_code == 404
+
+
+def test_excluir_cultura_de_outro_usuario_retorna_404(criar_usuario_autenticado):
+    _, client1 = criar_usuario_autenticado("produtor1")
+    _, client2 = criar_usuario_autenticado("produtor2")
+    criada = client1.post("/api/culturas/", _payload_valido(), format="json").data
+
+    response = client2.delete(f"/api/culturas/{criada['id']}/")
+
+    assert response.status_code == 404
+    assert Cultura.objects.filter(id=criada["id"]).exists()
