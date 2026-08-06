@@ -4,7 +4,7 @@ import { z } from 'zod'
 import type { Cultura, CulturaInput } from '../api/culturas'
 import type { ApiError } from '../lib/api-client'
 import { useMapeamentoErroFormulario } from '../lib/mutation-errors'
-import { Button, Field, FieldLabel, FormError, IconPlus, IconTrash, Input } from './ui'
+import { Button, Field, FormError, IconPlus, IconTrash, Input } from './ui'
 
 const numeroInteiroNaoNegativo = z
   .string()
@@ -91,7 +91,7 @@ export function CulturaForm({ cultura, erro, onSubmit, onCancel }: CulturaFormPr
       </Field>
 
       <div className="space-y-3">
-        <FieldLabel>Fases</FieldLabel>
+        <p className="mb-1.5 block text-sm font-bold text-ink-soft">Fases</p>
         {fields.map((field, index) => (
           <div key={field.id} className="flex flex-wrap items-end gap-2">
             <Field id={`fase-${index}-nome`} label="Fase" error={errors.fases?.[index]?.nome?.message}>
@@ -108,7 +108,10 @@ export function CulturaForm({ cultura, erro, onSubmit, onCancel }: CulturaFormPr
             </Button>
           </div>
         ))}
-        {typeof errors.fases?.root?.message === 'string' && <FormError>{errors.fases.root.message}</FormError>}
+        {(() => {
+          const erroFases = errors.fases?.root?.message ?? (errors.fases as { message?: string } | undefined)?.message
+          return typeof erroFases === 'string' && <FormError>{erroFases}</FormError>
+        })()}
         <Button type="button" variant="ghost" size="sm" onClick={() => append({ nome: '', dia_inicio: '', dia_fim: '' })}>
           <IconPlus className="h-4 w-4" /> Adicionar fase
         </Button>

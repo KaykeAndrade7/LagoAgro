@@ -114,4 +114,11 @@ describe('CulturaForm', () => {
 
     expect(await screen.findByText('Já existe uma cultura com esse nome.')).toBeInTheDocument()
   })
+
+  it('mapeia erro de campo fases do backend para a mensagem de fases', async () => {
+    const erro = new ApiError(400, 'Erro de validacao', { fases: ['Fase incompleta, faltando: dia_fim.'] })
+    render(<CulturaForm erro={erro} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+
+    expect(await screen.findByText('Fase incompleta, faltando: dia_fim.')).toBeInTheDocument()
+  })
 })
