@@ -3,7 +3,6 @@ from decimal import Decimal
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db.models.deletion import ProtectedError
 
 from crops.models import Cultura
 from finance.models import LancamentoFinanceiro
@@ -96,11 +95,12 @@ def test_deletar_plantio_deleta_tarefas_e_colheitas_em_cascata():
     assert Colheita.objects.count() == 0
 
 
-def test_deletar_plantio_com_lancamento_e_protegido():
+def test_deletar_plantio_deleta_lancamento_em_cascata():
     plantio = _criar_plantio()
     LancamentoFinanceiro.objects.create(
         plantio=plantio, valor="150.00", data="2026-01-15", descricao="Compra de mudas", setor="insumos"
     )
 
-    with pytest.raises(ProtectedError):
-        plantio.delete()
+    plantio.delete()
+
+    assert LancamentoFinanceiro.objects.count() == 0

@@ -14,17 +14,17 @@ def _criar_plantio(usuario):
     return Plantio.objects.create(talhao=talhao, cultura=cultura, data_plantio="2026-01-01")
 
 
-def test_deletar_plantio_com_lancamento_vinculado_retorna_409(criar_usuario_autenticado):
+def test_deletar_plantio_com_lancamento_vinculado_deleta_em_cascata(criar_usuario_autenticado):
     usuario, client = criar_usuario_autenticado()
     plantio = _criar_plantio(usuario)
-    LancamentoFinanceiro.objects.create(
+    lancamento = LancamentoFinanceiro.objects.create(
         plantio=plantio, valor="150.00", data="2026-01-15", descricao="Compra de mudas", setor="insumos"
     )
 
     response = client.delete(f"/api/plantios/{plantio.id}/")
 
-    assert response.status_code == 409
-    assert "detail" in response.data
+    assert response.status_code == 204
+    assert not LancamentoFinanceiro.objects.filter(id=lancamento.id).exists()
 
 
 def test_deletar_insumo_com_aplicacao_vinculada_retorna_409(criar_usuario_autenticado):
