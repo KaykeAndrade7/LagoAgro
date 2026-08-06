@@ -22,10 +22,10 @@ class Insumo(models.Model):
 class AplicacaoInsumo(models.Model):
     # created_by/created_at: trilha de auditoria (threat-model.md,
     # mitigacao de Repudiation).
-    # created_by vira null se a conta do autor for removida (ADR 007); plantio e PROTECT
-    # para que a trilha nao suma se o dono do dado apagar o plantio (usar
-    # Plantio.status="cancelado" em vez de deletar).
-    plantio = models.ForeignKey("plantings.Plantio", on_delete=models.PROTECT, related_name="aplicacoes")
+    # created_by vira null se a conta do autor for removida (ADR 007);
+    # plantio e CASCADE (ADR 009 - reverte a Parte 1 da ADR 007): o dono da
+    # conta pode excluir o proprio plantio e tudo que depende dele.
+    plantio = models.ForeignKey("plantings.Plantio", on_delete=models.CASCADE, related_name="aplicacoes")
     insumo = models.ForeignKey(Insumo, on_delete=models.PROTECT, related_name="aplicacoes")
     data = models.DateField()
     quantidade = models.DecimalField(max_digits=10, decimal_places=2)
