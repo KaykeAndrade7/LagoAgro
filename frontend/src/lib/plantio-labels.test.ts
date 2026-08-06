@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { nomeTalhao, nomeCultura, labelPlantio } from './plantio-labels'
 
 const talhoes = [{ id: 1, propriedade: 1, nome: 'Talhao 1', area: '1.00', tipo_solo: 'argiloso' }]
-const culturas = [{ id: 1, nome: 'Tomate', ciclo_dias: 90, fases: [] }]
+const culturas = [{ id: 1, nome: 'Tomate', ciclo_dias: 90, fases: [], somente_leitura: false }]
 const plantios = [{ id: 1, talhao: 1, cultura: 1, data_plantio: '2026-07-01', status: 'em_andamento' as const }]
 
 describe('nomeTalhao', () => {

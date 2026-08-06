@@ -6,7 +6,7 @@ import type { Talhao } from '../api/talhoes'
 import type { Cultura } from '../api/culturas'
 
 const talhoes: Talhao[] = [{ id: 1, propriedade: 1, nome: 'Talhao 1', area: '2.50', tipo_solo: 'Argiloso' }]
-const culturas: Cultura[] = [{ id: 1, nome: 'Tomate', ciclo_dias: 90, fases: [] }]
+const culturas: Cultura[] = [{ id: 1, nome: 'Tomate', ciclo_dias: 90, fases: [], somente_leitura: false }]
 
 describe('PlantioForm', () => {
   it('popula os selects de talhao e cultura a partir das props', () => {

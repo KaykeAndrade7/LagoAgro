@@ -17,7 +17,7 @@ vi.mock('../api/culturas')
 
 const plantio = { id: 1, talhao: 1, cultura: 1, data_plantio: '2026-07-01', status: 'em_andamento' as const }
 const talhao = { id: 1, propriedade: 1, nome: 'Talhao 1', area: '1.00', tipo_solo: 'argiloso' }
-const cultura = { id: 1, nome: 'Tomate', ciclo_dias: 90, fases: [] }
+const cultura = { id: 1, nome: 'Tomate', ciclo_dias: 90, fases: [], somente_leitura: false }
 const trabalhador = { id: 1, nome: 'Joao', valor_diaria: '120.00', ativo: true }
 
 function renderComProvider() {

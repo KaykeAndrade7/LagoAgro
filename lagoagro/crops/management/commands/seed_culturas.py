@@ -49,7 +49,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for dados in CULTURAS_MVP:
             cultura, criada = Cultura.objects.get_or_create(
-                nome=dados["nome"], defaults={"ciclo_dias": dados["ciclo_dias"]}
+                usuario=None, nome=dados["nome"], defaults={"ciclo_dias": dados["ciclo_dias"]}
             )
             if not criada:
                 self.stdout.write(f"'{cultura.nome}' já existe, pulando.")

@@ -1,9 +1,23 @@
+from django.conf import settings
 from django.db import models
 
 
 class Cultura(models.Model):
-    nome = models.CharField(max_length=100, unique=True)
+    # usuario nulo = catalogo embutido (pimentao, tomate, batata no MVP,
+    # populado por seed_culturas), visivel e listavel por qualquer conta,
+    # nunca editavel/excluivel pela API. usuario preenchido = variedade
+    # cadastrada pela propria conta, visivel so a ela, com CRUD completo.
+    # Ver docs/superpowers/specs/2026-08-06-cultura-cadastro-por-conta-design.md.
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name="culturas"
+    )
+    nome = models.CharField(max_length=100)
     ciclo_dias = models.PositiveIntegerField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["usuario", "nome"], name="unique_cultura_por_usuario"),
+        ]
 
     def __str__(self):
         return self.nome
