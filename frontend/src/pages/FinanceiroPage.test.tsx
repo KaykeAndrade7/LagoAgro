@@ -139,7 +139,7 @@ describe('FinanceiroPage', () => {
     expect(await screen.findByText('Tem certeza que deseja excluir este lancamento?')).toBeInTheDocument()
   })
 
-  it('excluir lancamento com diarias vinculadas mostra a contagem no dialogo', async () => {
+  it('excluir lancamento com diarias vinculadas avisa que o pagamento sera desfeito', async () => {
     vi.mocked(lancamentosApi.listarLancamentos).mockResolvedValue([
       { id: 1, plantio: 1, tipo: 'gasto', valor: '120.00', data: '2026-08-05', descricao: 'Pagamento de diarias', setor: 'mao_de_obra' },
     ])
@@ -152,7 +152,9 @@ describe('FinanceiroPage', () => {
     await userEvent.click(screen.getByText('Excluir'))
 
     expect(
-      await screen.findByText('Este lancamento paga 1 diaria(s) e nao podera ser excluido.'),
+      await screen.findByText(
+        'Este lancamento paga 1 diaria(s). Excluir vai desfazer o pagamento delas (voltam a ficar pendentes).',
+      ),
     ).toBeInTheDocument()
   })
 

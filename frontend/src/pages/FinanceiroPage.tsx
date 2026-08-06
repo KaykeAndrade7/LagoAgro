@@ -135,7 +135,7 @@ export function FinanceiroPage() {
     }
     const n = diarias.filter((d) => d.lancamento === exclusaoPendente.id).length
     return n > 0
-      ? `Este lancamento paga ${n} diaria(s) e nao podera ser excluido.`
+      ? `Este lancamento paga ${n} diaria(s). Excluir vai desfazer o pagamento delas (voltam a ficar pendentes).`
       : 'Tem certeza que deseja excluir este lancamento?'
   }
 
