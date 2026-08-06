@@ -108,9 +108,7 @@ export function CulturaForm({ cultura, erro, onSubmit, onCancel }: CulturaFormPr
             </Button>
           </div>
         ))}
-        {errors.fases && (
-          <FormError>{(errors.fases as any)?.message || 'Cadastre pelo menos uma fase'}</FormError>
-        )}
+        {typeof errors.fases?.root?.message === 'string' && <FormError>{errors.fases.root.message}</FormError>}
         <Button type="button" variant="ghost" size="sm" onClick={() => append({ nome: '', dia_inicio: '', dia_fim: '' })}>
           <IconPlus className="h-4 w-4" /> Adicionar fase
         </Button>
