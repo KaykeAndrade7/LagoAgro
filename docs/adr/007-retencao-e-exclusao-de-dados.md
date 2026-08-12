@@ -4,8 +4,8 @@
 Aceito
 
 ## Contexto
-Ao modelar `AplicacaoInsumo` (ver plano `docs/superpowers/plans/2026-07-30-models-django.md`,
-Task 4), duas escolhas de `on_delete` combinadas produziram um comportamento não
+Ao modelar `AplicacaoInsumo` (planejamento da Task 4 de models), duas
+escolhas de `on_delete` combinadas produziram um comportamento não
 percebido até uma revisão de branch inteira:
 
 1. `AplicacaoInsumo.created_by` e `AplicacaoInsumo.insumo` usavam `PROTECT`,

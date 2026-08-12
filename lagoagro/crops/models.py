@@ -7,7 +7,7 @@ class Cultura(models.Model):
     # populado por seed_culturas), visivel e listavel por qualquer conta,
     # nunca editavel/excluivel pela API. usuario preenchido = variedade
     # cadastrada pela propria conta, visivel so a ela, com CRUD completo.
-    # Ver docs/superpowers/specs/2026-08-06-cultura-cadastro-por-conta-design.md.
+    # Ver docs/adr/010-cultura-deixa-de-ser-excecao-multi-tenant.md.
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name="culturas"
     )

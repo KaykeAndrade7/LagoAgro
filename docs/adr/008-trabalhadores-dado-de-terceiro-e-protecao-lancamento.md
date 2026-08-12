@@ -6,9 +6,8 @@ Aceito
 ## Contexto
 
 A revisão final da branch `trabalhadores-diarias` (models `Trabalhador`/`Diaria`
-e serviço `pagar_diarias_pendentes`, ver
-`docs/superpowers/specs/2026-07-31-trabalhadores-diarias-design.md`) levantou
-dois pontos que a ADR 007 não previa, por terem surgido de uma feature nova:
+e serviço `pagar_diarias_pendentes`) levantou dois pontos que a ADR 007 não
+previa, por terem surgido de uma feature nova:
 
 1. **`Trabalhador.nome` é dado de uma pessoa que não é o dono da conta.** A
    ADR 007 (Parte 2) justificou que "exclusão de conta" via anonimização é
