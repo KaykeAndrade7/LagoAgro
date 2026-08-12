@@ -8,7 +8,7 @@ backend rodando em `:8000`.
 
 Pré-requisito: o backend Django precisa estar rodando em `localhost:8000`
 pra que o proxy de `/api` funcione (ver `lagoagro/README.md` ou o
-`AGENTS.md` na raiz do repositório pra subir o backend).
+`Contexto.md` na raiz do repositório pra subir o backend).
 
 ```bash
 npm install
