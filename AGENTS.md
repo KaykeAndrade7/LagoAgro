@@ -59,7 +59,7 @@ lagoagro/
 Regra importante: `domain/` deve ser testável sem banco de dados e sem
 Django rodando — são funções Python puras.
 
-Frontend em frontend/ na raiz do repo (React + Vite + TypeScript + Tailwind, ver docs/superpowers/specs/2026-08-01-frontend-scaffold-auth-design.md).
+Frontend em frontend/ na raiz do repo (React + Vite + TypeScript + Tailwind).
 
 ## Regras de negócio já validadas com o usuário final
 
