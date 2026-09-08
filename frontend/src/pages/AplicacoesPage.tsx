@@ -7,8 +7,10 @@ import { listarCulturas } from '../api/culturas'
 import { listarInsumos } from '../api/insumos'
 import { ApiError, paraApiError } from '../lib/api-client'
 import { labelPlantio } from '../lib/plantio-labels'
+import { usePlantioFiltro } from '../lib/use-plantio-filtro'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { AplicacaoInsumoForm } from '../components/AplicacaoInsumoForm'
+import { FiltroPlantio } from '../components/FiltroPlantio'
 import { Button, Card, EmptyState, ErrorState, IconTrash, LoadingState, PageHeader } from '../components/ui'
 
 export function AplicacoesPage() {
@@ -23,6 +25,7 @@ export function AplicacoesPage() {
   const talhoesQuery = useQuery({ queryKey: ['talhoes'], queryFn: listarTalhoes })
   const culturasQuery = useQuery({ queryKey: ['culturas'], queryFn: listarCulturas })
   const insumosQuery = useQuery({ queryKey: ['insumos'], queryFn: listarInsumos })
+  const { plantioId, setPlantioId } = usePlantioFiltro(plantiosQuery.data ?? [])
 
   const criarMutation = useMutation({
     mutationFn: criarAplicacao,
@@ -79,6 +82,8 @@ export function AplicacoesPage() {
     label: labelPlantio(plantios, talhoes, culturas, plantio.id),
   }))
   const aplicacoesOrdenadas = [...aplicacoes].sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0))
+  const aplicacoesFiltradas =
+    plantioId == null ? aplicacoesOrdenadas : aplicacoesOrdenadas.filter((a) => a.plantio === plantioId)
 
   return (
     <div>
@@ -97,8 +102,10 @@ export function AplicacoesPage() {
         }
       />
 
+      <FiltroPlantio opcoes={plantioOpcoes} value={plantioId} onChange={setPlantioId} />
+
       {formularioAberto && (
-        <Card className="mb-5 p-5">
+        <Card className="mb-5 mt-5 p-5">
           <AplicacaoInsumoForm
             plantioOpcoes={plantioOpcoes}
             insumos={insumos}
@@ -112,10 +119,14 @@ export function AplicacoesPage() {
         </Card>
       )}
 
-      {aplicacoesOrdenadas.length === 0 && !formularioAberto && <EmptyState>Nenhuma aplicação registrada ainda.</EmptyState>}
+      {aplicacoesFiltradas.length === 0 && !formularioAberto && (
+        <EmptyState>
+          {plantioId != null ? 'Nenhuma aplicação para este plantio.' : 'Nenhuma aplicação registrada ainda.'}
+        </EmptyState>
+      )}
 
-      <ul className="space-y-3">
-        {aplicacoesOrdenadas.map((aplicacao) => (
+      <ul className="mt-5 space-y-3">
+        {aplicacoesFiltradas.map((aplicacao) => (
           <li key={aplicacao.id}>
             <Card className="flex flex-col gap-2 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0 flex-1">

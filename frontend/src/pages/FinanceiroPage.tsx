@@ -17,7 +17,9 @@ import { listarTalhoes } from '../api/talhoes'
 import { listarCulturas } from '../api/culturas'
 import { ApiError, paraApiError } from '../lib/api-client'
 import { labelPlantio } from '../lib/plantio-labels'
+import { usePlantioFiltro } from '../lib/use-plantio-filtro'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { FiltroPlantio } from '../components/FiltroPlantio'
 import { LancamentoForm } from '../components/LancamentoForm'
 import { Badge, Button, Card, EmptyState, ErrorState, IconPencil, IconTrash, LoadingState, PageHeader } from '../components/ui'
 
@@ -52,6 +54,7 @@ export function FinanceiroPage() {
   const plantiosQuery = useQuery({ queryKey: ['plantios'], queryFn: listarPlantios })
   const talhoesQuery = useQuery({ queryKey: ['talhoes'], queryFn: listarTalhoes })
   const culturasQuery = useQuery({ queryKey: ['culturas'], queryFn: listarCulturas })
+  const { plantioId, setPlantioId } = usePlantioFiltro(plantiosQuery.data ?? [])
 
   function abrirFormulario(proximo: typeof formulario) {
     setErroFormulario(null)
@@ -64,10 +67,11 @@ export function FinanceiroPage() {
       queryClient.invalidateQueries({ queryKey: ['lancamentos'] })
       setErroFormulario(null)
       setFormulario(null)
-      // Se um filtro (Gastos/Ganhos) estava ativo, o lancamento recem-criado
-      // pode nao bater com ele - volta pra "Todos" pra garantir que o
+      // Se algum filtro estava ativo, o lancamento recem-criado pode nao bater
+      // com ele - zera os dois (Gastos/Ganhos e plantio) pra garantir que o
       // usuario sempre veja o que acabou de registrar.
       setFiltro('todos')
+      setPlantioId(null)
     },
     onError: (erro) => setErroFormulario(paraApiError(erro)),
   })
@@ -139,17 +143,21 @@ export function FinanceiroPage() {
       : 'Tem certeza que deseja excluir este lancamento?'
   }
 
-  // Totais sempre somam TODOS os lancamentos, independente do filtro de
-  // exibicao ativo abaixo - trocar o filtro muda só a lista, nunca os totais.
-  const totalGasto = lancamentos.filter((l) => l.tipo === 'gasto').reduce((soma, l) => soma + Number(l.valor), 0)
-  const totalGanho = lancamentos.filter((l) => l.tipo === 'ganho').reduce((soma, l) => soma + Number(l.valor), 0)
+  // O filtro de plantio define o escopo da tela inteira: com um plantio
+  // selecionado, tanto a lista quanto os totais passam a considerar só ele.
+  // O toggle Gastos/Ganhos abaixo é só de exibicao - muda a lista, nunca os
+  // totais.
+  const lancamentosDoPlantio = plantioId == null ? lancamentos : lancamentos.filter((l) => l.plantio === plantioId)
+
+  const totalGasto = lancamentosDoPlantio.filter((l) => l.tipo === 'gasto').reduce((soma, l) => soma + Number(l.valor), 0)
+  const totalGanho = lancamentosDoPlantio.filter((l) => l.tipo === 'ganho').reduce((soma, l) => soma + Number(l.valor), 0)
   const saldoBruto = totalGanho - totalGasto
   // Duas somas de ponto flutuante matematicamente iguais podem cancelar pra
   // algo como -0.00000000001 em vez de 0 - sem essa guarda, o saldo
   // renderizaria como "R$ -0.00", que parece negativo mas nao é.
   const saldoLiquido = Math.abs(saldoBruto) < 0.005 ? 0 : saldoBruto
 
-  const lancamentosOrdenados = [...lancamentos].sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0))
+  const lancamentosOrdenados = [...lancamentosDoPlantio].sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0))
   const lancamentosFiltrados =
     filtro === 'todos' ? lancamentosOrdenados : lancamentosOrdenados.filter((l) => l.tipo === filtro)
 
@@ -163,6 +171,10 @@ export function FinanceiroPage() {
           </Button>
         }
       />
+
+      <div className="mb-5">
+        <FiltroPlantio opcoes={plantioOpcoes} value={plantioId} onChange={setPlantioId} />
+      </div>
 
       <Card className="mb-5 grid grid-cols-1 gap-3 px-5 py-4 sm:grid-cols-3">
         <div>
@@ -205,7 +217,13 @@ export function FinanceiroPage() {
       )}
 
       {lancamentosFiltrados.length === 0 && formulario?.tipo !== 'novo' && (
-        <EmptyState>{filtro !== 'todos' ? 'Nenhum lançamento deste tipo.' : 'Nenhum lançamento registrado ainda.'}</EmptyState>
+        <EmptyState>
+          {filtro !== 'todos'
+            ? 'Nenhum lançamento deste tipo.'
+            : plantioId != null
+              ? 'Nenhum lançamento para este plantio.'
+              : 'Nenhum lançamento registrado ainda.'}
+        </EmptyState>
       )}
 
       <ul className="space-y-3">

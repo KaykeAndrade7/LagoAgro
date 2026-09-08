@@ -15,7 +15,9 @@ import { listarCulturas } from '../api/culturas'
 import { ApiError, paraApiError } from '../lib/api-client'
 import { hojeISO, estaAtrasada } from '../lib/datas'
 import { labelPlantio } from '../lib/plantio-labels'
+import { usePlantioFiltro } from '../lib/use-plantio-filtro'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { FiltroPlantio } from '../components/FiltroPlantio'
 import { TarefaForm } from '../components/TarefaForm'
 import { TarefaItem } from '../components/TarefaItem'
 import {
@@ -45,6 +47,7 @@ export function TarefasPage() {
   const plantiosQuery = useQuery({ queryKey: ['plantios'], queryFn: listarPlantios })
   const talhoesQuery = useQuery({ queryKey: ['talhoes'], queryFn: listarTalhoes })
   const culturasQuery = useQuery({ queryKey: ['culturas'], queryFn: listarCulturas })
+  const { plantioId, setPlantioId } = usePlantioFiltro(plantiosQuery.data ?? [])
 
   function abrirFormulario(proximo: FormularioAberto) {
     setErroFormulario(null)
@@ -119,6 +122,7 @@ export function TarefasPage() {
   }))
   const hoje = hojeISO()
   const tarefasVisiveis = (mostrarConcluidas ? tarefas : tarefas.filter((t) => !t.concluida))
+    .filter((t) => plantioId == null || t.plantio === plantioId)
     .slice()
     .sort((a, b) => (a.data < b.data ? -1 : a.data > b.data ? 1 : 0))
 
@@ -137,7 +141,9 @@ export function TarefasPage() {
         {mostrarConcluidas ? 'Ocultar concluídas' : 'Ver concluídas'}
       </Button>
 
-      <div className="mb-4">
+      <FiltroPlantio opcoes={plantioOpcoes} value={plantioId} onChange={setPlantioId} />
+
+      <div className="mb-4 mt-4">
         <FormError>{erroConclusao}</FormError>
       </div>
 
@@ -152,7 +158,9 @@ export function TarefasPage() {
         </Card>
       )}
 
-      {tarefasVisiveis.length === 0 && formulario?.tipo !== 'novo' && <EmptyState>Nenhuma tarefa por aqui.</EmptyState>}
+      {tarefasVisiveis.length === 0 && formulario?.tipo !== 'novo' && (
+        <EmptyState>{plantioId != null ? 'Nenhuma tarefa para este plantio.' : 'Nenhuma tarefa por aqui.'}</EmptyState>
+      )}
 
       <ul className="space-y-3">
         {tarefasVisiveis.map((tarefa) =>

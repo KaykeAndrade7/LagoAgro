@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ColheitasPage } from './ColheitasPage'
 import * as colheitasApi from '../api/colheitas'
@@ -14,15 +15,19 @@ vi.mock('../api/talhoes')
 vi.mock('../api/culturas')
 
 const plantio = { id: 1, talhao: 1, cultura: 1, data_plantio: '2026-07-01', status: 'em_andamento' as const }
+const plantio2 = { id: 2, talhao: 2, cultura: 1, data_plantio: '2026-07-10', status: 'em_andamento' as const }
 const talhao = { id: 1, propriedade: 1, nome: 'Talhao 1', area: '1.00', tipo_solo: 'argiloso' }
+const talhao2 = { id: 2, propriedade: 1, nome: 'Talhao 2', area: '1.00', tipo_solo: 'arenoso' }
 const cultura = { id: 1, nome: 'Tomate', ciclo_dias: 90, fases: [], somente_leitura: false }
 
-function renderComProvider() {
+function renderComProvider(rota = '/colheitas') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <QueryClientProvider client={queryClient}>
-      <ColheitasPage />
-    </QueryClientProvider>,
+    <MemoryRouter initialEntries={[rota]}>
+      <QueryClientProvider client={queryClient}>
+        <ColheitasPage />
+      </QueryClientProvider>
+    </MemoryRouter>,
   )
 }
 
@@ -91,6 +96,40 @@ describe('ColheitasPage', () => {
     await userEvent.click(screen.getByText('Salvar'))
 
     expect(await screen.findByText(/20\.00/)).toBeInTheDocument()
+  })
+
+  it('filtra a lista pelo plantio escolhido no dropdown', async () => {
+    vi.mocked(plantiosApi.listarPlantios).mockResolvedValue([plantio, plantio2])
+    vi.mocked(talhoesApi.listarTalhoes).mockResolvedValue([talhao, talhao2])
+    vi.mocked(colheitasApi.listarColheitas).mockResolvedValue([
+      { id: 1, plantio: 1, data: '2026-08-05', classificacao: 'primeira', quantidade: '10.00' },
+      { id: 2, plantio: 2, data: '2026-08-06', classificacao: 'segunda', quantidade: '20.00' },
+    ])
+
+    renderComProvider()
+
+    await screen.findByText(/10\.00/)
+    expect(screen.getByText(/20\.00/)).toBeInTheDocument()
+
+    await userEvent.selectOptions(screen.getByLabelText('Filtrar por plantio'), '1')
+
+    expect(screen.getByText(/10\.00/)).toBeInTheDocument()
+    expect(screen.queryByText(/20\.00/)).not.toBeInTheDocument()
+  })
+
+  it('aplica o filtro de plantio vindo da URL (?plantio=2)', async () => {
+    vi.mocked(plantiosApi.listarPlantios).mockResolvedValue([plantio, plantio2])
+    vi.mocked(talhoesApi.listarTalhoes).mockResolvedValue([talhao, talhao2])
+    vi.mocked(colheitasApi.listarColheitas).mockResolvedValue([
+      { id: 1, plantio: 1, data: '2026-08-05', classificacao: 'primeira', quantidade: '10.00' },
+      { id: 2, plantio: 2, data: '2026-08-06', classificacao: 'segunda', quantidade: '20.00' },
+    ])
+
+    renderComProvider('/colheitas?plantio=2')
+
+    await screen.findByText(/20\.00/)
+    expect(screen.queryByText(/10\.00/)).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Filtrar por plantio')).toHaveValue('2')
   })
 
   it('excluir colheita remove o item da lista', async () => {
