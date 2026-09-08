@@ -14,8 +14,10 @@ import { listarTalhoes } from '../api/talhoes'
 import { listarCulturas } from '../api/culturas'
 import { ApiError, paraApiError } from '../lib/api-client'
 import { labelPlantio } from '../lib/plantio-labels'
+import { usePlantioFiltro } from '../lib/use-plantio-filtro'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ColheitaForm } from '../components/ColheitaForm'
+import { FiltroPlantio } from '../components/FiltroPlantio'
 import {
   Badge,
   Button,
@@ -41,6 +43,7 @@ export function ColheitasPage() {
   const plantiosQuery = useQuery({ queryKey: ['plantios'], queryFn: listarPlantios })
   const talhoesQuery = useQuery({ queryKey: ['talhoes'], queryFn: listarTalhoes })
   const culturasQuery = useQuery({ queryKey: ['culturas'], queryFn: listarCulturas })
+  const { plantioId, setPlantioId } = usePlantioFiltro(plantiosQuery.data ?? [])
 
   function abrirFormulario(proximo: FormularioAberto) {
     setErroFormulario(null)
@@ -105,6 +108,8 @@ export function ColheitasPage() {
     label: labelPlantio(plantios, talhoes, culturas, plantio.id),
   }))
   const colheitasOrdenadas = [...colheitas].sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0))
+  const colheitasFiltradas =
+    plantioId == null ? colheitasOrdenadas : colheitasOrdenadas.filter((c) => c.plantio === plantioId)
 
   return (
     <div>
@@ -117,8 +122,10 @@ export function ColheitasPage() {
         }
       />
 
+      <FiltroPlantio opcoes={plantioOpcoes} value={plantioId} onChange={setPlantioId} />
+
       {formulario?.tipo === 'novo' && (
-        <Card className="mb-5 p-5">
+        <Card className="mb-5 mt-5 p-5">
           <ColheitaForm
             plantioOpcoes={plantioOpcoes}
             erro={erroFormulario}
@@ -128,10 +135,14 @@ export function ColheitasPage() {
         </Card>
       )}
 
-      {colheitasOrdenadas.length === 0 && formulario?.tipo !== 'novo' && <EmptyState>Nenhuma colheita registrada ainda.</EmptyState>}
+      {colheitasFiltradas.length === 0 && formulario?.tipo !== 'novo' && (
+        <EmptyState>
+          {plantioId != null ? 'Nenhuma colheita para este plantio.' : 'Nenhuma colheita registrada ainda.'}
+        </EmptyState>
+      )}
 
-      <ul className="space-y-3">
-        {colheitasOrdenadas.map((colheita) =>
+      <ul className="mt-5 space-y-3">
+        {colheitasFiltradas.map((colheita) =>
           formulario?.tipo === 'editar' && formulario.colheita.id === colheita.id ? (
             <li key={colheita.id}>
               <Card className="p-5">
